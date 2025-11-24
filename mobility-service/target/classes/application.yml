@@ -1,0 +1,35 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /mobility
+
+spring:
+  application:
+    name: mobility-service
+  datasource:
+    url: jdbc:h2:mem:mobilitydb
+    driverClassName: org.h2.Driver
+    username: sa
+    password: password
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    defer-datasource-initialization: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+  sql:
+    init:
+      mode: never  # DÉSACTIVE data.sql
+
+logging:
+  level:
+    com.smartcity.mobility: DEBUG
+    org.hibernate.SQL: DEBUG

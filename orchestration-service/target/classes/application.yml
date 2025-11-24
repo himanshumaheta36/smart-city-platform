@@ -1,0 +1,10 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: orchestration-service
+
+logging:
+  level:
+    com.smartcity.orchestration: DEBUG

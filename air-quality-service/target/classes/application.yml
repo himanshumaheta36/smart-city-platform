@@ -1,0 +1,36 @@
+server:
+  port: 8082
+  servlet:
+    context-path: /airquality
+
+spring:
+  application:
+    name: air-quality-service
+  datasource:
+    url: jdbc:h2:mem:airqualitydb
+    driverClassName: org.h2.Driver
+    username: sa
+    password: password
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
+
+# Configuration SOAP Web Services
+springdoc:
+  api-docs:
+    path: /api-docs
+
+logging:
+  level:
+    com.smartcity.airquality: DEBUG
+    org.springframework.ws: DEBUG

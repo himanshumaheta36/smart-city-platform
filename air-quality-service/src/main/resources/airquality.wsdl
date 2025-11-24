@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  xmlns:tns="http://smartcity.com/airquality"
+                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  targetNamespace="http://smartcity.com/airquality">
+    
+    <!-- Types -->
+    <wsdl:types>
+        <xsd:schema targetNamespace="http://smartcity.com/airquality">
+            
+            <!-- Requête pour obtenir la qualité de l'air par zone -->
+            <xsd:element name="GetAirQualityRequest">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="zoneName" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            
+            <!-- Réponse pour la qualité de l'air -->
+            <xsd:element name="GetAirQualityResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="airQualityData" type="tns:AirQualityData"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            
+            <!-- Requête pour obtenir toutes les zones -->
+            <xsd:element name="GetAllZonesRequest">
+                <xsd:complexType>
+                    <xsd:sequence/>
+                </xsd:complexType>
+            </xsd:element>
+            
+            <!-- Réponse avec toutes les zones -->
+            <xsd:element name="GetAllZonesResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="airQualityData" type="tns:AirQualityData" maxOccurs="unbounded"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            
+            <!-- Requête pour comparer deux zones -->
+            <xsd:element name="CompareZonesRequest">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="zone1" type="xsd:string"/>
+                        <xsd:element name="zone2" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            
+            <!-- Réponse de comparaison -->
+            <xsd:element name="CompareZonesResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="comparisonResult" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            
+            <!-- Type de données pour la qualité de l'air -->
+            <xsd:complexType name="AirQualityData">
+                <xsd:sequence>
+                    <xsd:element name="zoneName" type="xsd:string"/>
+                    <xsd:element name="aqiValue" type="xsd:double"/>
+                    <xsd:element name="aqiCategory" type="xsd:string"/>
+                    <xsd:element name="pm25" type="xsd:double" minOccurs="0"/>
+                    <xsd:element name="pm10" type="xsd:double" minOccurs="0"/>
+                    <xsd:element name="no2" type="xsd:double" minOccurs="0"/>
+                    <xsd:element name="o3" type="xsd:double" minOccurs="0"/>
+                    <xsd:element name="co" type="xsd:double" minOccurs="0"/>
+                    <xsd:element name="so2" type="xsd:double" minOccurs="0"/>
+                    <xsd:element name="measurementDate" type="xsd:dateTime"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            
+        </xsd:schema>
+    </wsdl:types>
+    
+    <!-- Messages -->
+    <wsdl:message name="GetAirQualityInput">
+        <wsdl:part name="parameters" element="tns:GetAirQualityRequest"/>
+    </wsdl:message>
+    
+    <wsdl:message name="GetAirQualityOutput">
+        <wsdl:part name="parameters" element="tns:GetAirQualityResponse"/>
+    </wsdl:message>
+    
+    <wsdl:message name="GetAllZonesInput">
+        <wsdl:part name="parameters" element="tns:GetAllZonesRequest"/>
+    </wsdl:message>
+    
+    <wsdl:message name="GetAllZonesOutput">
+        <wsdl:part name="parameters" element="tns:GetAllZonesResponse"/>
+    </wsdl:message>
+    
+    <wsdl:message name="CompareZonesInput">
+        <wsdl:part name="parameters" element="tns:CompareZonesRequest"/>
+    </wsdl:message>
+    
+    <wsdl:message name="CompareZonesOutput">
+        <wsdl:part name="parameters" element="tns:CompareZonesResponse"/>
+    </wsdl:message>
+    
+    <!-- Port Types -->
+    <wsdl:portType name="AirQualityPortType">
+        <wsdl:operation name="getAirQuality">
+            <wsdl:input message="tns:GetAirQualityInput"/>
+            <wsdl:output message="tns:GetAirQualityOutput"/>
+        </wsdl:operation>
+        
+        <wsdl:operation name="getAllZones">
+            <wsdl:input message="tns:GetAllZonesInput"/>
+            <wsdl:output message="tns:GetAllZonesOutput"/>
+        </wsdl:operation>
+        
+        <wsdl:operation name="compareZones">
+            <wsdl:input message="tns:CompareZonesInput"/>
+            <wsdl:output message="tns:CompareZonesOutput"/>
+        </wsdl:operation>
+    </wsdl:portType>
+    
+    <!-- Binding -->
+    <wsdl:binding name="AirQualityBinding" type="tns:AirQualityPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        
+        <wsdl:operation name="getAirQuality">
+            <soap:operation soapAction="http://smartcity.com/airquality/getAirQuality"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        
+        <wsdl:operation name="getAllZones">
+            <soap:operation soapAction="http://smartcity.com/airquality/getAllZones"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        
+        <wsdl:operation name="compareZones">
+            <soap:operation soapAction="http://smartcity.com/airquality/compareZones"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:binding>
+    
+    <!-- Service -->
+    <wsdl:service name="AirQualityService">
+        <wsdl:port name="AirQualityPort" binding="tns:AirQualityBinding">
+            <soap:address location="http://localhost:8082/airquality/ws"/>
+        </wsdl:port>
+    </wsdl:service>
+    
+</wsdl:definitions>

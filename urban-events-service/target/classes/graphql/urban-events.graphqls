@@ -1,0 +1,155 @@
+type Query {
+    # Récupérer tous les événements
+    getAllEvents: [UrbanEvent]
+    
+    # Récupérer un événement par ID
+    getEventById(id: ID!): UrbanEvent
+    
+    # Filtrer les événements
+    filterEvents(
+        type: EventType,
+        category: EventCategory,
+        status: EventStatus,
+        location: String,
+        freeOnly: Boolean
+    ): [UrbanEvent]
+    
+    # Rechercher des événements
+    searchEvents(keyword: String!): [UrbanEvent]
+    
+    # Événements à venir
+    getUpcomingEvents: [UrbanEvent]
+    
+    # Événements en cours
+    getOngoingEvents: [UrbanEvent]
+    
+    # Événements près d'un lieu
+    getEventsNearLocation(latitude: Float!, longitude: Float!, radiusKm: Float!): [UrbanEvent]
+    
+    # Événements par organisateur
+    getEventsByOrganizer(organizer: String!): [UrbanEvent]
+    
+    # Événements avec tags
+    getEventsWithTags(tags: [String!]!): [UrbanEvent]
+    
+    # Événements dans une plage de dates
+    getEventsInDateRange(startDate: String!, endDate: String!): [UrbanEvent]
+    
+    # Statistiques des événements
+    getEventStatistics: EventStatistics
+}
+
+type Mutation {
+    # Créer un nouvel événement
+    createEvent(input: EventInput!): UrbanEvent
+    
+    # Mettre à jour un événement
+    updateEvent(id: ID!, input: EventInput!): UrbanEvent
+    
+    # Supprimer un événement
+    deleteEvent(id: ID!): Boolean
+    
+    # S'inscrire à un événement
+    registerAttendee(eventId: ID!): UrbanEvent
+    
+    # Annuler l'inscription
+    cancelRegistration(eventId: ID!): UrbanEvent
+}
+
+# Types d'énumération
+enum EventType {
+    CONCERT
+    FESTIVAL
+    SPORTS
+    CONFERENCE
+    EXHIBITION
+    WORKSHOP
+    COMMUNITY
+    CULTURAL
+    EDUCATIONAL
+    ENTERTAINMENT
+    BUSINESS
+    OTHER
+}
+
+enum EventStatus {
+    SCHEDULED
+    ONGOING
+    COMPLETED
+    CANCELLED
+    POSTPONED
+}
+
+enum EventCategory {
+    FREE
+    PAID
+    DONATION
+    INVITATION
+}
+
+# Type principal pour les événements urbains
+type UrbanEvent {
+    id: ID!
+    title: String!
+    description: String!
+    eventType: EventType!
+    category: EventCategory!
+    status: EventStatus!
+    location: String!
+    latitude: Float!
+    longitude: Float!
+    startDateTime: String!
+    endDateTime: String!
+    capacity: Int!
+    registeredAttendees: Int!
+    price: Float
+    organizer: String!
+    tags: [String!]!
+    imageUrl: String
+    createdAt: String!
+    updatedAt: String!
+    availableSpots: Int!
+    isFree: Boolean!
+    isUpcoming: Boolean!
+    isOngoing: Boolean!
+    isFull: Boolean!
+}
+
+# Input pour créer/mettre à jour des événements
+input EventInput {
+    title: String!
+    description: String!
+    eventType: EventType!
+    category: EventCategory!
+    location: String!
+    latitude: Float!
+    longitude: Float!
+    startDateTime: String!
+    endDateTime: String!
+    capacity: Int!
+    price: Float
+    organizer: String!
+    tags: [String!]!
+    imageUrl: String
+}
+
+# Statistiques des événements
+type EventStatistics {
+    totalEvents: Int!
+    scheduledEvents: Int!
+    ongoingEvents: Int!
+    completedEvents: Int!
+    eventsByType: [TypeCount!]!
+    eventsByCategory: [CategoryCount!]!
+    popularTags: [String!]!
+}
+
+type TypeCount {
+    type: EventType!
+    count: Int!
+}
+
+type CategoryCount {
+    category: EventCategory!
+    count: Int!
+}

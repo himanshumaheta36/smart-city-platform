@@ -1,0 +1,35 @@
+# Dependencies Node.js
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# Package locks
+package-lock.json
+*/package-lock.json
+**/package-lock.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation spécifique
+TESTS.md
+CHECKLIST.md
+
+# Build
+dist/
+build/

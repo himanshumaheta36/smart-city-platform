@@ -1,0 +1,163 @@
+version: '3.8'
+
+services:
+  # API Gateway - Point d'entrée unique
+  api-gateway:
+    build: 
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=api-gateway
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - smart-city-network
+    restart: unless-stopped
+
+  # Service Mobilité Intelligente (REST)
+  mobility-service:
+    build:
+      context: ./mobility-service
+      dockerfile: Dockerfile
+    container_name: mobility-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8081
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - smart-city-network
+    restart: unless-stopped
+
+  # Service Qualité de l'Air (SOAP)
+  air-quality-service:
+    build:
+      context: ./air-quality-service
+      dockerfile: Dockerfile
+    container_name: air-quality-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8082
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - smart-city-network
+    restart: unless-stopped
+
+  # Service Urgences (gRPC)
+  emergency-service:
+    build:
+      context: ./emergency-service
+      dockerfile: Dockerfile
+    container_name: emergency-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8083
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - smart-city-network
+    restart: unless-stopped
+
+  # Service Événements Urbains (GraphQL)
+  urban-events-service:
+    build:
+      context: ./urban-events-service
+      dockerfile: Dockerfile
+    container_name: urban-events-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8084
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - smart-city-network
+    restart: unless-stopped
+
+  # Service d'Orchestration
+  orchestration-service:
+    build:
+      context: ./orchestration-service
+      dockerfile: Dockerfile
+    container_name: orchestration-service
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8085
+      - API_GATEWAY_URL=http://api-gateway:8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/orchestration/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 50s
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+      mobility-service:
+        condition: service_healthy
+      air-quality-service:
+        condition: service_healthy
+    networks:
+      - smart-city-network
+    restart: unless-stopped
+
+  # Client Web React
+  client-web:
+    build:
+      context: ./client-web
+      dockerfile: Dockerfile
+    container_name: client-web
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080/api
+      - REACT_APP_WS_URL=ws://localhost:8080
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - smart-city-network
+    restart: unless-stopped
+
+networks:
+  smart-city-network:
+    driver: bridge
+    name: smart-city-network
+
+volumes:
+  postgres-data:
+    driver: local
