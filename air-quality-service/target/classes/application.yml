@@ -15,6 +15,8 @@ spring:
     console:
       enabled: true
       path: /h2-console
+      settings:
+        web-allow-others: true
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
@@ -30,6 +32,7 @@ management:
     web:
       exposure:
         include: health,info
+      base-path: /actuator
   endpoint:
     health:
       show-details: always

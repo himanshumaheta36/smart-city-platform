@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # API Gateway - Point d'entrée unique
   api-gateway:
@@ -16,15 +14,10 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 120s  # Increased for Spring Boot startup
     networks:
       - smart-city-network
     restart: unless-stopped
-    depends_on:
-      - mobility-service
-      - air-quality-service
-      - emergency-service
-      - urban-events-service
 
   # Service Mobilité (REST)
   mobility-service:
@@ -37,11 +30,11 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/mobility/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 40s
+      start_period: 90s
     networks:
       - smart-city-network
     restart: unless-stopped
@@ -57,11 +50,11 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8082/airquality/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 40s
+      start_period: 90s
     networks:
       - smart-city-network
     restart: unless-stopped
@@ -78,11 +71,11 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8083/api/emergencies/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8083/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 40s
+      start_period: 90s
     networks:
       - smart-city-network
     restart: unless-stopped
@@ -102,7 +95,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 40s
+      start_period: 90s
     networks:
       - smart-city-network
     restart: unless-stopped
@@ -118,16 +111,15 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8085/orchestration/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8085/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 90s
     networks:
       - smart-city-network
     restart: unless-stopped
     depends_on:
-      - api-gateway
       - mobility-service
       - air-quality-service
 
@@ -140,14 +132,17 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_API_URL=http://localhost:8080/api
+      - REACT_APP_API_URL=http://localhost:8080
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     networks:
       - smart-city-network
     restart: unless-stopped
-    depends_on:
-      - api-gateway
 
 networks:
   smart-city-network:
     driver: bridge
-    name: smart-city-network

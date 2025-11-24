@@ -33,3 +33,5 @@ CHECKLIST.md
 # Build
 dist/
 build/
+
+.vscode
