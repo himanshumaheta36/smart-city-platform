@@ -6,59 +6,12 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      routes:
-        # Route pour le service Mobilité (REST)
-        - id: mobility-service
-          uri: http://mobility-service:8081
-          predicates:
-            - Path=/api/mobility/**
-          filters:
-            - RewritePath=/api/mobility/(?<segment>.*), /$\{segment}
-        
-        # Route pour le service Qualité d'Air (SOAP)
-        - id: air-quality-service
-          uri: http://air-quality-service:8082
-          predicates:
-            - Path=/api/air-quality/**
-          filters:
-            - RewritePath=/api/air-quality/(?<segment>.*), /$\{segment}
-        
-        # Route pour le service Urgences (gRPC - REST adapter)
-        - id: emergency-service
-          uri: http://emergency-service:8083
-          predicates:
-            - Path=/api/emergency/**
-          filters:
-            - RewritePath=/api/emergency/(?<segment>.*), /$\{segment}
-        
-        # Route pour le service Événements (GraphQL)
-        - id: urban-events-service
-          uri: http://urban-events-service:8084
-          predicates:
-            - Path=/api/events/**
-          filters:
-            - RewritePath=/api/events/(?<segment>.*), /$\{segment}
-        
-        # Route pour le service d'Orchestration
-        - id: orchestration-service
-          uri: http://orchestration-service:8085
-          predicates:
-            - Path=/api/orchestration/**
-          filters:
-            - RewritePath=/api/orchestration/(?<segment>.*), /$\{segment}
-
-        # Route pour CORS - important pour le client web
-        - id: cors-route
-          uri: http://example.com
-          predicates:
-            - Method=OPTIONS
-          filters:
-            - SetStatus=200
-
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins: "http://localhost:3000"
+            allowedOrigins: 
+              - "http://localhost:3000"
+              - "http://client-web:3000"
             allowedMethods:
               - GET
               - POST
@@ -67,6 +20,67 @@ spring:
               - OPTIONS
             allowedHeaders: "*"
             allowCredentials: true
+            maxAge: 3600
+      routes:
+        # Route pour le service Mobilité (REST)
+        - id: mobility-service
+          uri: http://mobility-service:8081
+          predicates:
+            - Path=/api/mobility/**
+          filters:
+            - RewritePath=/api/mobility(?<segment>/?.*), /mobility$\{segment}
+            - name: CircuitBreaker
+              args:
+                name: mobilityCircuitBreaker
+                fallbackUri: forward:/fallback
+        
+        # Route pour le service Qualité d'Air (SOAP)
+        - id: air-quality-service
+          uri: http://air-quality-service:8082
+          predicates:
+            - Path=/api/air-quality/**
+          filters:
+            - RewritePath=/api/air-quality(?<segment>/?.*), /airquality$\{segment}
+            - name: CircuitBreaker
+              args:
+                name: airQualityCircuitBreaker
+                fallbackUri: forward:/fallback
+        
+        # Route pour le service Urgences (gRPC - REST adapter)
+        - id: emergency-service
+          uri: http://emergency-service:8083
+          predicates:
+            - Path=/api/emergency/**
+          filters:
+            - RewritePath=/api/emergency(?<segment>/?.*), /api/emergencies$\{segment}
+            - name: CircuitBreaker
+              args:
+                name: emergencyCircuitBreaker
+                fallbackUri: forward:/fallback
+        
+        # Route pour le service Événements (GraphQL)
+        - id: urban-events-service
+          uri: http://urban-events-service:8084
+          predicates:
+            - Path=/api/events/**
+          filters:
+            - RewritePath=/api/events(?<segment>/?.*), $\{segment}
+            - name: CircuitBreaker
+              args:
+                name: eventsCircuitBreaker
+                fallbackUri: forward:/fallback
+        
+        # Route pour le service d'Orchestration
+        - id: orchestration-service
+          uri: http://orchestration-service:8085
+          predicates:
+            - Path=/api/orchestration/**
+          filters:
+            - RewritePath=/api/orchestration(?<segment>/?.*), /orchestration$\{segment}
+            - name: CircuitBreaker
+              args:
+                name: orchestrationCircuitBreaker
+                fallbackUri: forward:/fallback
 
 management:
   endpoints:
@@ -79,5 +93,5 @@ management:
 
 logging:
   level:
-    org.springframework.cloud.gateway: DEBUG
-    reactor.netty: DEBUG
+    org.springframework.cloud.gateway: INFO
+    reactor.netty: INFO

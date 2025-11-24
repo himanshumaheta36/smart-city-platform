@@ -17,7 +17,7 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
+    show-sql: false
     defer-datasource-initialization: true
   sql:
     init:
@@ -28,7 +28,15 @@ grpc:
   server:
     port: 9090
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
 logging:
   level:
-    com.smartcity.emergency: DEBUG
-    org.hibernate.SQL: DEBUG
+    com.smartcity.emergency: INFO

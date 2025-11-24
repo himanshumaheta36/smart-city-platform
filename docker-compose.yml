@@ -11,9 +11,8 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_APPLICATION_NAME=api-gateway
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -21,8 +20,13 @@ services:
     networks:
       - smart-city-network
     restart: unless-stopped
+    depends_on:
+      - mobility-service
+      - air-quality-service
+      - emergency-service
+      - urban-events-service
 
-  # Service Mobilité Intelligente (REST)
+  # Service Mobilité (REST)
   mobility-service:
     build:
       context: ./mobility-service
@@ -32,12 +36,11 @@ services:
       - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SERVER_PORT=8081
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/mobility/actuator/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 40s
     networks:
       - smart-city-network
@@ -53,12 +56,11 @@ services:
       - "8082:8082"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SERVER_PORT=8082
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8082/airquality/actuator/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 40s
     networks:
       - smart-city-network
@@ -72,20 +74,20 @@ services:
     container_name: emergency-service
     ports:
       - "8083:8083"
+      - "9090:9090"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SERVER_PORT=8083
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8083/api/emergencies/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 40s
     networks:
       - smart-city-network
     restart: unless-stopped
 
-  # Service Événements Urbains (GraphQL)
+  # Service Événements (GraphQL)
   urban-events-service:
     build:
       context: ./urban-events-service
@@ -95,12 +97,11 @@ services:
       - "8084:8084"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SERVER_PORT=8084
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8084/actuator/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 40s
     networks:
       - smart-city-network
@@ -116,24 +117,19 @@ services:
       - "8085:8085"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SERVER_PORT=8085
-      - API_GATEWAY_URL=http://api-gateway:8080
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8085/orchestration/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8085/orchestration/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 50s
-    depends_on:
-      api-gateway:
-        condition: service_healthy
-      mobility-service:
-        condition: service_healthy
-      air-quality-service:
-        condition: service_healthy
+      start_period: 40s
     networks:
       - smart-city-network
     restart: unless-stopped
+    depends_on:
+      - api-gateway
+      - mobility-service
+      - air-quality-service
 
   # Client Web React
   client-web:
@@ -145,19 +141,13 @@ services:
       - "3000:3000"
     environment:
       - REACT_APP_API_URL=http://localhost:8080/api
-      - REACT_APP_WS_URL=ws://localhost:8080
-    depends_on:
-      api-gateway:
-        condition: service_healthy
     networks:
       - smart-city-network
     restart: unless-stopped
+    depends_on:
+      - api-gateway
 
 networks:
   smart-city-network:
     driver: bridge
     name: smart-city-network
-
-volumes:
-  postgres-data:
-    driver: local
