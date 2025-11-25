@@ -47,28 +47,39 @@ export const mobilityAPI = {
 // ==================== AIR QUALITY SERVICE (SOAP) ====================
 export const airQualityAPI = {
   // Toutes les zones - appel direct au service SOAP
-  getAllZones: () => axios.post(
-    'http://localhost:8082/airquality/ws',
-    `<?xml version="1.0" encoding="UTF-8"?>
+  getAllZones: async () => {
+    try {
+      const response = await axios.post(
+        'http://localhost:8082/airquality/ws',
+        `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
   <soapenv:Header/>
   <soapenv:Body>
     <air:GetAllZonesRequest/>
   </soapenv:Body>
 </soapenv:Envelope>`,
-    { 
-      headers: { 
-        'Content-Type': 'text/xml; charset=utf-8',
-        'SOAPAction': ''
-      },
-      timeout: 10000
+        { 
+          headers: { 
+            'Content-Type': 'text/xml; charset=utf-8',
+            'SOAPAction': 'http://smartcity.com/airquality/getAllZones'
+          },
+          timeout: 15000
+        }
+      );
+      console.log('✅ SOAP getAllZones response received');
+      return response;
+    } catch (error) {
+      console.error('❌ SOAP getAllZones error:', error.message);
+      throw error;
     }
-  ),
+  },
   
   // Qualité d'air par zone
-  getAirQuality: (zoneName) => axios.post(
-    'http://localhost:8082/airquality/ws',
-    `<?xml version="1.0" encoding="UTF-8"?>
+  getAirQuality: async (zoneName) => {
+    try {
+      const response = await axios.post(
+        'http://localhost:8082/airquality/ws',
+        `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
   <soapenv:Header/>
   <soapenv:Body>
@@ -77,19 +88,28 @@ export const airQualityAPI = {
     </air:GetAirQualityRequest>
   </soapenv:Body>
 </soapenv:Envelope>`,
-    { 
-      headers: { 
-        'Content-Type': 'text/xml; charset=utf-8',
-        'SOAPAction': ''
-      },
-      timeout: 10000
+        { 
+          headers: { 
+            'Content-Type': 'text/xml; charset=utf-8',
+            'SOAPAction': 'http://smartcity.com/airquality/getAirQuality'
+          },
+          timeout: 15000
+        }
+      );
+      console.log('✅ SOAP getAirQuality response received');
+      return response;
+    } catch (error) {
+      console.error('❌ SOAP getAirQuality error:', error.message);
+      throw error;
     }
-  ),
+  },
   
   // Comparer deux zones
-  compareZones: (zone1, zone2) => axios.post(
-    'http://localhost:8082/airquality/ws',
-    `<?xml version="1.0" encoding="UTF-8"?>
+  compareZones: async (zone1, zone2) => {
+    try {
+      const response = await axios.post(
+        'http://localhost:8082/airquality/ws',
+        `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
   <soapenv:Header/>
   <soapenv:Body>
@@ -99,14 +119,21 @@ export const airQualityAPI = {
     </air:CompareZonesRequest>
   </soapenv:Body>
 </soapenv:Envelope>`,
-    { 
-      headers: { 
-        'Content-Type': 'text/xml; charset=utf-8',
-        'SOAPAction': ''
-      },
-      timeout: 10000
+        { 
+          headers: { 
+            'Content-Type': 'text/xml; charset=utf-8',
+            'SOAPAction': 'http://smartcity.com/airquality/compareZones'
+          },
+          timeout: 15000
+        }
+      );
+      console.log('✅ SOAP compareZones response received');
+      return response;
+    } catch (error) {
+      console.error('❌ SOAP compareZones error:', error.message);
+      throw error;
     }
-  ),
+  },
 };
 
 // ==================== EMERGENCY SERVICE (gRPC via REST) ====================
@@ -114,14 +141,24 @@ export const emergencyAPI = {
   createAlert: (alertData) => axios.post(
     'http://localhost:8083/api/emergencies',
     alertData,
-    { timeout: 10000 }
+    { 
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
   ),
   getAlerts: () => axios.get('http://localhost:8083/api/emergencies', { timeout: 10000 }),
   getAlert: (emergencyId) => axios.get(`http://localhost:8083/api/emergencies/${emergencyId}`, { timeout: 10000 }),
   updateStatus: (emergencyId, statusData) => axios.put(
     `http://localhost:8083/api/emergencies/${emergencyId}/status`,
     statusData,
-    { timeout: 10000 }
+    { 
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
   ),
   getStats: (hoursBack = 24) => axios.get(
     `http://localhost:8083/api/emergencies/stats?hoursBack=${hoursBack}`,
@@ -131,128 +168,192 @@ export const emergencyAPI = {
 
 // ==================== EVENTS SERVICE (GraphQL) ====================
 export const eventsAPI = {
-  getAllEvents: () => axios.post(
-    'http://localhost:8084/graphql',
-    {
-      query: `
-        query {
-          getAllEvents {
-            id
-            title
-            description
-            location
-            startDateTime
-            endDateTime
-            eventType
-            category
-            capacity
-            registeredAttendees
-            availableSpots
-            isFree
-            price
-            organizer
-            tags
-            imageUrl
+  getAllEvents: async () => {
+    try {
+      const response = await axios.post(
+        'http://localhost:8084/graphql',
+        {
+          query: `
+            query {
+              getAllEvents {
+                id
+                title
+                description
+                location
+                startDateTime
+                endDateTime
+                eventType
+                category
+                capacity
+                registeredAttendees
+                availableSpots
+                isFree
+                price
+                organizer
+                tags
+              }
+            }
+          `
+        },
+        { 
+          timeout: 10000,
+          headers: {
+            'Content-Type': 'application/json'
           }
         }
-      `
-    },
-    { timeout: 10000 }
-  ),
+      );
+      console.log('✅ GraphQL getAllEvents response:', response.data);
+      return response;
+    } catch (error) {
+      console.error('❌ GraphQL getAllEvents error:', error.message);
+      throw error;
+    }
+  },
   
-  searchEvents: (keyword) => axios.post(
-    'http://localhost:8084/graphql',
-    {
-      query: `
-        query {
-          searchEvents(keyword: "${keyword}") {
-            id
-            title
-            description
-            location
-            startDateTime
-            eventType
-            category
-            isFree
-            availableSpots
-            organizer
-            tags
+  searchEvents: async (keyword) => {
+    try {
+      const response = await axios.post(
+        'http://localhost:8084/graphql',
+        {
+          query: `
+            query {
+              searchEvents(keyword: "${keyword}") {
+                id
+                title
+                description
+                location
+                startDateTime
+                eventType
+                category
+                isFree
+                availableSpots
+                organizer
+                tags
+              }
+            }
+          `
+        },
+        { 
+          timeout: 10000,
+          headers: {
+            'Content-Type': 'application/json'
           }
         }
-      `
-    },
-    { timeout: 10000 }
-  ),
+      );
+      return response;
+    } catch (error) {
+      console.error('❌ GraphQL searchEvents error:', error.message);
+      throw error;
+    }
+  },
   
-  getUpcomingEvents: () => axios.post(
-    'http://localhost:8084/graphql',
-    {
-      query: `
-        query {
-          getUpcomingEvents {
-            id
-            title
-            location
-            startDateTime
-            endDateTime
-            availableSpots
-            category
-            eventType
-            organizer
+  getUpcomingEvents: async () => {
+    try {
+      const response = await axios.post(
+        'http://localhost:8084/graphql',
+        {
+          query: `
+            query {
+              getUpcomingEvents {
+                id
+                title
+                location
+                startDateTime
+                endDateTime
+                availableSpots
+                category
+                eventType
+                organizer
+                tags
+              }
+            }
+          `
+        },
+        { 
+          timeout: 10000,
+          headers: {
+            'Content-Type': 'application/json'
           }
         }
-      `
-    },
-    { timeout: 10000 }
-  ),
+      );
+      return response;
+    } catch (error) {
+      console.error('❌ GraphQL getUpcomingEvents error:', error.message);
+      throw error;
+    }
+  },
   
-  filterEvents: (filters) => {
+  filterEvents: async (filters) => {
     const { type, category, freeOnly } = filters;
     let filterArgs = [];
     if (type) filterArgs.push(`type: ${type}`);
     if (category) filterArgs.push(`category: ${category}`);
     if (freeOnly !== undefined) filterArgs.push(`freeOnly: ${freeOnly}`);
     
-    return axios.post(
-      'http://localhost:8084/graphql',
-      {
-        query: `
-          query {
-            filterEvents(${filterArgs.join(', ')}) {
-              id
-              title
-              location
-              startDateTime
-              eventType
-              category
-              isFree
-              availableSpots
-              organizer
-              tags
+    try {
+      const response = await axios.post(
+        'http://localhost:8084/graphql',
+        {
+          query: `
+            query {
+              filterEvents(${filterArgs.join(', ')}) {
+                id
+                title
+                location
+                startDateTime
+                eventType
+                category
+                isFree
+                availableSpots
+                organizer
+                tags
+              }
             }
-          }
-        `
-      },
-      { timeout: 10000 }
-    );
-  },
-  
-  registerToEvent: (eventId) => axios.post(
-    'http://localhost:8084/graphql',
-    {
-      query: `
-        mutation {
-          registerAttendee(eventId: ${eventId}) {
-            id
-            title
-            registeredAttendees
-            availableSpots
+          `
+        },
+        { 
+          timeout: 10000,
+          headers: {
+            'Content-Type': 'application/json'
           }
         }
-      `
-    },
-    { timeout: 10000 }
-  ),
+      );
+      return response;
+    } catch (error) {
+      console.error('❌ GraphQL filterEvents error:', error.message);
+      throw error;
+    }
+  },
+  
+  registerToEvent: async (eventId) => {
+    try {
+      const response = await axios.post(
+        'http://localhost:8084/graphql',
+        {
+          query: `
+            mutation {
+              registerAttendee(eventId: ${eventId}) {
+                id
+                title
+                registeredAttendees
+                availableSpots
+              }
+            }
+          `
+        },
+        { 
+          timeout: 10000,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error('❌ GraphQL registerToEvent error:', error.message);
+      throw error;
+    }
+  },
 };
 
 // ==================== ORCHESTRATION SERVICE ====================
@@ -274,12 +375,80 @@ export const orchestrationAPI = {
 
 // ==================== HEALTH CHECKS ====================
 export const healthAPI = {
-  gateway: () => axios.get('http://localhost:8080/actuator/health', { timeout: 5000 }),
-  mobility: () => axios.get('http://localhost:8081/mobility/actuator/health', { timeout: 5000 }),
-  airQuality: () => axios.get('http://localhost:8082/airquality/actuator/health', { timeout: 5000 }),
-  emergency: () => axios.get('http://localhost:8083/actuator/health', { timeout: 5000 }),
-  events: () => axios.get('http://localhost:8084/actuator/health', { timeout: 5000 }),
-  orchestration: () => axios.get('http://localhost:8085/orchestration/health', { timeout: 5000 }),
+  gateway: async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/actuator/health', { timeout: 5000 });
+      return response;
+    } catch (error) {
+      console.error('Gateway health check failed:', error.message);
+      throw error;
+    }
+  },
+  
+  mobility: async () => {
+    try {
+      const response = await axios.get('http://localhost:8081/mobility/actuator/health', { timeout: 5000 });
+      return response;
+    } catch (error) {
+      console.error('Mobility health check failed:', error.message);
+      throw error;
+    }
+  },
+  
+  airQuality: async () => {
+    try {
+      // Essayer d'abord l'actuator
+      const response = await axios.get('http://localhost:8082/airquality/actuator/health', { timeout: 5000 });
+      return response;
+    } catch (error) {
+      console.error('Air Quality health check failed:', error.message);
+      // Si l'actuator échoue, essayer le WSDL comme fallback
+      try {
+        await axios.get('http://localhost:8082/airquality/ws/airquality.wsdl', { timeout: 5000 });
+        return { data: { status: 'UP' } };
+      } catch (wsdlError) {
+        throw error;
+      }
+    }
+  },
+  
+  emergency: async () => {
+    try {
+      const response = await axios.get('http://localhost:8083/actuator/health', { timeout: 5000 });
+      return response;
+    } catch (error) {
+      console.error('Emergency health check failed:', error.message);
+      throw error;
+    }
+  },
+  
+  events: async () => {
+    try {
+      const response = await axios.get('http://localhost:8084/actuator/health', { timeout: 5000 });
+      return response;
+    } catch (error) {
+      console.error('Events health check failed:', error.message);
+      // Essayer GraphQL comme fallback
+      try {
+        await axios.post('http://localhost:8084/graphql', {
+          query: '{ __typename }'
+        }, { timeout: 5000 });
+        return { data: { status: 'UP' } };
+      } catch (graphqlError) {
+        throw error;
+      }
+    }
+  },
+  
+  orchestration: async () => {
+    try {
+      const response = await axios.get('http://localhost:8085/orchestration/health', { timeout: 5000 });
+      return response;
+    } catch (error) {
+      console.error('Orchestration health check failed:', error.message);
+      throw error;
+    }
+  },
 };
 
 export default api;
