@@ -243,7 +243,7 @@ export const orchestrationAPI = {
 
 // ==================== HEALTH CHECKS ====================
 export const healthAPI = {
-  gateway: () => api.get('/actuator/health', { baseURL: 'http://localhost:8080' }),
+  gateway: () => axios.get('http://localhost:8080/actuator/health'),
   mobility: () => axios.get('http://localhost:8081/mobility/actuator/health'),
   airQuality: () => axios.get('http://localhost:8082/airquality/actuator/health'),
   emergency: () => axios.get('http://localhost:8083/actuator/health'),

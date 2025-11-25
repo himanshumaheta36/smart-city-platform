@@ -10,8 +10,8 @@ const AirQualityService = () => {
   const [comparisonResult, setComparisonResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('check');
+  const [error, setError] = useState('');
 
-  // Zones prédéfinies disponibles
   const availableZones = [
     'Centre-ville',
     'Quartier Nord',
@@ -24,44 +24,104 @@ const AirQualityService = () => {
     loadAllZones();
   }, []);
 
+  // Helper function pour extraire le texte d'un élément XML
+  const getTextContent = (xmlDoc, tagName) => {
+    // Essayer avec le préfixe ns2:
+    let element = xmlDoc.getElementsByTagName('ns2:' + tagName)[0];
+    if (!element) {
+      // Essayer sans préfixe
+      element = xmlDoc.getElementsByTagName(tagName)[0];
+    }
+    if (!element) {
+      // Essayer avec d'autres préfixes communs
+      element = xmlDoc.getElementsByTagName('tns:' + tagName)[0];
+    }
+    return element?.textContent || '';
+  };
+
   const loadAllZones = async () => {
     setLoading(true);
+    setError('');
     try {
-      const soapRequest = `
-        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
-          <soapenv:Header/>
-          <soapenv:Body>
-            <air:GetAllZonesRequest/>
-          </soapenv:Body>
-        </soapenv:Envelope>
-      `;
+      const soapRequest = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <air:GetAllZonesRequest/>
+  </soapenv:Body>
+</soapenv:Envelope>`;
 
+      console.log('🔵 Envoi requête SOAP GetAllZones');
+      
       const response = await axios.post(
         'http://localhost:8082/airquality/ws',
         soapRequest,
-        { headers: { 'Content-Type': 'text/xml' } }
+        { 
+          headers: { 
+            'Content-Type': 'text/xml; charset=utf-8',
+            'SOAPAction': ''
+          } 
+        }
       );
 
-      // Parser la réponse SOAP XML
+      console.log('✅ Réponse reçue:', response.data);
+
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(response.data, 'text/xml');
-      const airQualityElements = xmlDoc.getElementsByTagName('ns2:airQualityData');
       
-      const parsedZones = Array.from(airQualityElements).map(elem => ({
-        zoneName: elem.getElementsByTagName('ns2:zoneName')[0]?.textContent,
-        aqiValue: parseFloat(elem.getElementsByTagName('ns2:aqiValue')[0]?.textContent),
-        aqiCategory: elem.getElementsByTagName('ns2:aqiCategory')[0]?.textContent,
-        pm25: parseFloat(elem.getElementsByTagName('ns2:pm25')[0]?.textContent),
-        pm10: parseFloat(elem.getElementsByTagName('ns2:pm10')[0]?.textContent),
-        no2: parseFloat(elem.getElementsByTagName('ns2:no2')[0]?.textContent),
-        o3: parseFloat(elem.getElementsByTagName('ns2:o3')[0]?.textContent),
-        co: parseFloat(elem.getElementsByTagName('ns2:co')[0]?.textContent),
-        so2: parseFloat(elem.getElementsByTagName('ns2:so2')[0]?.textContent),
-      }));
+      // Vérifier s'il y a des erreurs de parsing
+      const parserError = xmlDoc.getElementsByTagName('parsererror');
+      if (parserError.length > 0) {
+        throw new Error('Erreur de parsing XML: ' + parserError[0].textContent);
+      }
+
+      // Essayer différentes façons de trouver les éléments airQualityData
+      let airQualityElements = xmlDoc.getElementsByTagName('ns2:airQualityData');
+      if (airQualityElements.length === 0) {
+        airQualityElements = xmlDoc.getElementsByTagName('airQualityData');
+      }
+      if (airQualityElements.length === 0) {
+        airQualityElements = xmlDoc.getElementsByTagNameNS('http://smartcity.com/airquality', 'airQualityData');
+      }
+      
+      console.log('📊 Nombre d\'éléments trouvés:', airQualityElements.length);
+
+      if (airQualityElements.length === 0) {
+        console.warn('⚠️ Aucun élément airQualityData trouvé. Structure XML:', xmlDoc.documentElement.outerHTML);
+        setError('Aucune zone trouvée dans la réponse');
+        setZones([]);
+        return;
+      }
+
+      const parsedZones = Array.from(airQualityElements).map((elem, index) => {
+        console.log(`Parsing zone ${index + 1}:`, elem.outerHTML);
+        
+        const zone = {
+          zoneName: getTextContent(elem, 'zoneName'),
+          aqiValue: parseFloat(getTextContent(elem, 'aqiValue')) || 0,
+          aqiCategory: getTextContent(elem, 'aqiCategory'),
+          pm25: parseFloat(getTextContent(elem, 'pm25')) || 0,
+          pm10: parseFloat(getTextContent(elem, 'pm10')) || 0,
+          no2: parseFloat(getTextContent(elem, 'no2')) || 0,
+          o3: parseFloat(getTextContent(elem, 'o3')) || 0,
+          co: parseFloat(getTextContent(elem, 'co')) || 0,
+          so2: parseFloat(getTextContent(elem, 'so2')) || 0,
+        };
+        
+        console.log('Zone parsée:', zone);
+        return zone;
+      });
 
       setZones(parsedZones);
+      console.log('✅ Zones chargées:', parsedZones.length);
     } catch (error) {
-      console.error('Erreur chargement zones:', error);
+      console.error('❌ Erreur chargement zones:', error);
+      setError('Erreur lors du chargement des zones: ' + error.message);
+      
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+      }
     } finally {
       setLoading(false);
     }
@@ -72,42 +132,53 @@ const AirQualityService = () => {
     if (!selectedZone) return;
 
     setLoading(true);
+    setError('');
     try {
-      const soapRequest = `
-        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
-          <soapenv:Header/>
-          <soapenv:Body>
-            <air:GetAirQualityRequest>
-              <air:zoneName>${selectedZone}</air:zoneName>
-            </air:GetAirQualityRequest>
-          </soapenv:Body>
-        </soapenv:Envelope>
-      `;
+      const soapRequest = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <air:GetAirQualityRequest>
+      <air:zoneName>${selectedZone}</air:zoneName>
+    </air:GetAirQualityRequest>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+      console.log('🔵 Vérification qualité air pour:', selectedZone);
 
       const response = await axios.post(
         'http://localhost:8082/airquality/ws',
         soapRequest,
-        { headers: { 'Content-Type': 'text/xml' } }
+        { 
+          headers: { 
+            'Content-Type': 'text/xml; charset=utf-8',
+            'SOAPAction': ''
+          } 
+        }
       );
+
+      console.log('✅ Réponse reçue');
 
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(response.data, 'text/xml');
       
       const data = {
-        zoneName: xmlDoc.getElementsByTagName('ns2:zoneName')[0]?.textContent,
-        aqiValue: parseFloat(xmlDoc.getElementsByTagName('ns2:aqiValue')[0]?.textContent),
-        aqiCategory: xmlDoc.getElementsByTagName('ns2:aqiCategory')[0]?.textContent,
-        pm25: parseFloat(xmlDoc.getElementsByTagName('ns2:pm25')[0]?.textContent),
-        pm10: parseFloat(xmlDoc.getElementsByTagName('ns2:pm10')[0]?.textContent),
-        no2: parseFloat(xmlDoc.getElementsByTagName('ns2:no2')[0]?.textContent),
-        o3: parseFloat(xmlDoc.getElementsByTagName('ns2:o3')[0]?.textContent),
-        co: parseFloat(xmlDoc.getElementsByTagName('ns2:co')[0]?.textContent),
-        so2: parseFloat(xmlDoc.getElementsByTagName('ns2:so2')[0]?.textContent),
+        zoneName: getTextContent(xmlDoc, 'zoneName') || selectedZone,
+        aqiValue: parseFloat(getTextContent(xmlDoc, 'aqiValue')) || 0,
+        aqiCategory: getTextContent(xmlDoc, 'aqiCategory') || 'Unknown',
+        pm25: parseFloat(getTextContent(xmlDoc, 'pm25')) || 0,
+        pm10: parseFloat(getTextContent(xmlDoc, 'pm10')) || 0,
+        no2: parseFloat(getTextContent(xmlDoc, 'no2')) || 0,
+        o3: parseFloat(getTextContent(xmlDoc, 'o3')) || 0,
+        co: parseFloat(getTextContent(xmlDoc, 'co')) || 0,
+        so2: parseFloat(getTextContent(xmlDoc, 'so2')) || 0,
       };
 
       setAirQualityData(data);
+      console.log('✅ Données qualité air:', data);
     } catch (error) {
-      console.error('Erreur vérification qualité:', error);
+      console.error('❌ Erreur vérification qualité:', error);
+      setError('Erreur lors de la vérification: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -118,32 +189,45 @@ const AirQualityService = () => {
     if (!selectedZone || !zone2) return;
 
     setLoading(true);
+    setError('');
     try {
-      const soapRequest = `
-        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
-          <soapenv:Header/>
-          <soapenv:Body>
-            <air:CompareZonesRequest>
-              <air:zone1>${selectedZone}</air:zone1>
-              <air:zone2>${zone2}</air:zone2>
-            </air:CompareZonesRequest>
-          </soapenv:Body>
-        </soapenv:Envelope>
-      `;
+      const soapRequest = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <air:CompareZonesRequest>
+      <air:zone1>${selectedZone}</air:zone1>
+      <air:zone2>${zone2}</air:zone2>
+    </air:CompareZonesRequest>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+      console.log('🔵 Comparaison zones:', selectedZone, 'vs', zone2);
 
       const response = await axios.post(
         'http://localhost:8082/airquality/ws',
         soapRequest,
-        { headers: { 'Content-Type': 'text/xml' } }
+        { 
+          headers: { 
+            'Content-Type': 'text/xml; charset=utf-8',
+            'SOAPAction': ''
+          } 
+        }
       );
 
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(response.data, 'text/xml');
-      const result = xmlDoc.getElementsByTagName('ns2:comparisonResult')[0]?.textContent;
+      
+      let result = xmlDoc.getElementsByTagName('ns2:comparisonResult')[0]?.textContent;
+      if (!result) {
+        result = xmlDoc.getElementsByTagName('comparisonResult')[0]?.textContent;
+      }
 
-      setComparisonResult(result);
+      setComparisonResult(result || 'Résultat non disponible');
+      console.log('✅ Comparaison:', result);
     } catch (error) {
-      console.error('Erreur comparaison:', error);
+      console.error('❌ Erreur comparaison:', error);
+      setError('Erreur lors de la comparaison: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -196,6 +280,13 @@ const AirQualityService = () => {
           </div>
         </div>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="error" style={{ marginBottom: '1rem' }}>
+          ❌ {error}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="card">
@@ -266,7 +357,7 @@ const AirQualityService = () => {
               </button>
             </form>
 
-            {airQualityData && (
+            {airQualityData && airQualityData.aqiValue > 0 && (
               <div style={{ marginTop: '2rem' }}>
                 {/* AQI Card */}
                 <div style={{
@@ -414,7 +505,7 @@ const AirQualityService = () => {
               <div style={{ textAlign: 'center', padding: '3rem' }}>
                 🔄 Chargement des données...
               </div>
-            ) : (
+            ) : zones.length > 0 ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
                 {zones.map((zone, idx) => (
                   <div 
@@ -454,6 +545,16 @@ const AirQualityService = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '3rem', background: '#fef3c7', borderRadius: '8px' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>⚠️</div>
+                <div style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '0.5rem' }}>
+                  Aucune zone trouvée
+                </div>
+                <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                  Le service SOAP ne retourne pas de données. Vérifiez les logs du service.
+                </div>
               </div>
             )}
           </div>
