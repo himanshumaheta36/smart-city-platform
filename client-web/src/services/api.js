@@ -8,10 +8,10 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 secondes de timeout
+  timeout: 10000,
 });
 
-// Intercepteur pour logger les requêtes (utile pour le debug)
+// Intercepteur pour logger les requêtes
 api.interceptors.request.use(
   (config) => {
     console.log(`🔵 ${config.method.toUpperCase()} ${config.url}`);
@@ -37,96 +37,103 @@ api.interceptors.response.use(
 
 // ==================== MOBILITY SERVICE (REST) ====================
 export const mobilityAPI = {
-  // Lignes de transport
   getTransportLines: () => api.get('/mobility/api/transport-lines'),
   getTransportLineByNumber: (lineNumber) => api.get(`/mobility/api/transport-lines/number/${lineNumber}`),
   getTransportLinesByType: (type) => api.get(`/mobility/api/transport-lines/type/${type}`),
-  getTransportLinesByStation: (station) => api.get(`/mobility/api/transport-lines/station/${station}`),
-  
-  // Horaires
   getSchedulesByLine: (lineNumber) => api.get(`/mobility/api/schedules/line/${lineNumber}`),
-  getSchedulesByStation: (station, dayType = 'WEEKDAY') => 
-    api.get(`/mobility/api/schedules/station/${station}?dayType=${dayType}`),
-  
-  // Trafic
   getTrafficInfo: () => api.get('/mobility/api/traffic-info/active'),
-  getTrafficBySeverity: (severity) => api.get(`/mobility/api/traffic-info/severity/${severity}`),
 };
 
 // ==================== AIR QUALITY SERVICE (SOAP) ====================
 export const airQualityAPI = {
-  // Qualité de l'air par zone
-  getAirQuality: (zoneName) => 
-    api.post('/air-quality/ws', {
-      headers: { 'Content-Type': 'text/xml' },
-      data: `
-        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
-          <soapenv:Header/>
-          <soapenv:Body>
-            <air:GetAirQualityRequest>
-              <air:zoneName>${zoneName}</air:zoneName>
-            </air:GetAirQualityRequest>
-          </soapenv:Body>
-        </soapenv:Envelope>
-      `
-    }),
+  // Toutes les zones - appel direct au service SOAP
+  getAllZones: () => axios.post(
+    'http://localhost:8082/airquality/ws',
+    `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <air:GetAllZonesRequest/>
+  </soapenv:Body>
+</soapenv:Envelope>`,
+    { 
+      headers: { 
+        'Content-Type': 'text/xml; charset=utf-8',
+        'SOAPAction': ''
+      },
+      timeout: 10000
+    }
+  ),
   
-  // Toutes les zones
-  getAllZones: () => 
-    api.post('/air-quality/ws', {
-      headers: { 'Content-Type': 'text/xml' },
-      data: `
-        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
-          <soapenv:Header/>
-          <soapenv:Body>
-            <air:GetAllZonesRequest/>
-          </soapenv:Body>
-        </soapenv:Envelope>
-      `
-    }),
+  // Qualité d'air par zone
+  getAirQuality: (zoneName) => axios.post(
+    'http://localhost:8082/airquality/ws',
+    `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <air:GetAirQualityRequest>
+      <air:zoneName>${zoneName}</air:zoneName>
+    </air:GetAirQualityRequest>
+  </soapenv:Body>
+</soapenv:Envelope>`,
+    { 
+      headers: { 
+        'Content-Type': 'text/xml; charset=utf-8',
+        'SOAPAction': ''
+      },
+      timeout: 10000
+    }
+  ),
   
   // Comparer deux zones
-  compareZones: (zone1, zone2) => 
-    api.post('/air-quality/ws', {
-      headers: { 'Content-Type': 'text/xml' },
-      data: `
-        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
-          <soapenv:Header/>
-          <soapenv:Body>
-            <air:CompareZonesRequest>
-              <air:zone1>${zone1}</air:zone1>
-              <air:zone2>${zone2}</air:zone2>
-            </air:CompareZonesRequest>
-          </soapenv:Body>
-        </soapenv:Envelope>
-      `
-    }),
+  compareZones: (zone1, zone2) => axios.post(
+    'http://localhost:8082/airquality/ws',
+    `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:air="http://smartcity.com/airquality">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <air:CompareZonesRequest>
+      <air:zone1>${zone1}</air:zone1>
+      <air:zone2>${zone2}</air:zone2>
+    </air:CompareZonesRequest>
+  </soapenv:Body>
+</soapenv:Envelope>`,
+    { 
+      headers: { 
+        'Content-Type': 'text/xml; charset=utf-8',
+        'SOAPAction': ''
+      },
+      timeout: 10000
+    }
+  ),
 };
 
 // ==================== EMERGENCY SERVICE (gRPC via REST) ====================
 export const emergencyAPI = {
-  // Créer une alerte
-  createAlert: (alertData) => api.post('/emergency', alertData),
-  
-  // Obtenir toutes les alertes
-  getAlerts: () => api.get('/emergency'),
-  
-  // Obtenir une alerte spécifique
-  getAlert: (emergencyId) => api.get(`/emergency/${emergencyId}`),
-  
-  // Mettre à jour le statut
-  updateStatus: (emergencyId, statusData) => 
-    api.put(`/emergency/${emergencyId}/status`, statusData),
-  
-  // Statistiques
-  getStats: (hoursBack = 24) => api.get(`/emergency/stats?hoursBack=${hoursBack}`),
+  createAlert: (alertData) => axios.post(
+    'http://localhost:8083/api/emergencies',
+    alertData,
+    { timeout: 10000 }
+  ),
+  getAlerts: () => axios.get('http://localhost:8083/api/emergencies', { timeout: 10000 }),
+  getAlert: (emergencyId) => axios.get(`http://localhost:8083/api/emergencies/${emergencyId}`, { timeout: 10000 }),
+  updateStatus: (emergencyId, statusData) => axios.put(
+    `http://localhost:8083/api/emergencies/${emergencyId}/status`,
+    statusData,
+    { timeout: 10000 }
+  ),
+  getStats: (hoursBack = 24) => axios.get(
+    `http://localhost:8083/api/emergencies/stats?hoursBack=${hoursBack}`,
+    { timeout: 10000 }
+  ),
 };
 
 // ==================== EVENTS SERVICE (GraphQL) ====================
 export const eventsAPI = {
-  // Tous les événements
-  getAllEvents: () => 
-    api.post('/events/graphql', {
+  getAllEvents: () => axios.post(
+    'http://localhost:8084/graphql',
+    {
       query: `
         query {
           getAllEvents {
@@ -149,11 +156,13 @@ export const eventsAPI = {
           }
         }
       `
-    }),
+    },
+    { timeout: 10000 }
+  ),
   
-  // Rechercher des événements
-  searchEvents: (keyword) => 
-    api.post('/events/graphql', {
+  searchEvents: (keyword) => axios.post(
+    'http://localhost:8084/graphql',
+    {
       query: `
         query {
           searchEvents(keyword: "${keyword}") {
@@ -165,14 +174,19 @@ export const eventsAPI = {
             eventType
             category
             isFree
+            availableSpots
+            organizer
+            tags
           }
         }
       `
-    }),
+    },
+    { timeout: 10000 }
+  ),
   
-  // Événements à venir
-  getUpcomingEvents: () => 
-    api.post('/events/graphql', {
+  getUpcomingEvents: () => axios.post(
+    'http://localhost:8084/graphql',
+    {
       query: `
         query {
           getUpcomingEvents {
@@ -184,12 +198,14 @@ export const eventsAPI = {
             availableSpots
             category
             eventType
+            organizer
           }
         }
       `
-    }),
+    },
+    { timeout: 10000 }
+  ),
   
-  // Filtrer les événements
   filterEvents: (filters) => {
     const { type, category, freeOnly } = filters;
     let filterArgs = [];
@@ -197,27 +213,33 @@ export const eventsAPI = {
     if (category) filterArgs.push(`category: ${category}`);
     if (freeOnly !== undefined) filterArgs.push(`freeOnly: ${freeOnly}`);
     
-    return api.post('/events/graphql', {
-      query: `
-        query {
-          filterEvents(${filterArgs.join(', ')}) {
-            id
-            title
-            location
-            startDateTime
-            eventType
-            category
-            isFree
-            availableSpots
+    return axios.post(
+      'http://localhost:8084/graphql',
+      {
+        query: `
+          query {
+            filterEvents(${filterArgs.join(', ')}) {
+              id
+              title
+              location
+              startDateTime
+              eventType
+              category
+              isFree
+              availableSpots
+              organizer
+              tags
+            }
           }
-        }
-      `
-    });
+        `
+      },
+      { timeout: 10000 }
+    );
   },
   
-  // S'inscrire à un événement
-  registerToEvent: (eventId) => 
-    api.post('/events/graphql', {
+  registerToEvent: (eventId) => axios.post(
+    'http://localhost:8084/graphql',
+    {
       query: `
         mutation {
           registerAttendee(eventId: ${eventId}) {
@@ -228,27 +250,36 @@ export const eventsAPI = {
           }
         }
       `
-    }),
+    },
+    { timeout: 10000 }
+  ),
 };
 
 // ==================== ORCHESTRATION SERVICE ====================
 export const orchestrationAPI = {
-  // Planifier un trajet
-  planJourney: (startLocation, endLocation) => 
-    api.post(`/orchestration/plan-journey?startLocation=${encodeURIComponent(startLocation)}&endLocation=${encodeURIComponent(endLocation)}`),
+  planJourney: (startLocation, endLocation) => axios.post(
+    'http://localhost:8085/orchestration/plan-journey',
+    null,
+    {
+      params: {
+        startLocation: startLocation,
+        endLocation: endLocation
+      },
+      timeout: 10000
+    }
+  ),
   
-  // Health check
-  health: () => api.get('/orchestration/health'),
+  health: () => axios.get('http://localhost:8085/orchestration/health', { timeout: 5000 }),
 };
 
 // ==================== HEALTH CHECKS ====================
 export const healthAPI = {
-  gateway: () => axios.get('http://localhost:8080/actuator/health'),
-  mobility: () => axios.get('http://localhost:8081/mobility/actuator/health'),
-  airQuality: () => axios.get('http://localhost:8082/airquality/actuator/health'),
-  emergency: () => axios.get('http://localhost:8083/actuator/health'),
-  events: () => axios.get('http://localhost:8084/actuator/health'),
-  orchestration: () => axios.get('http://localhost:8085/actuator/health'),
+  gateway: () => axios.get('http://localhost:8080/actuator/health', { timeout: 5000 }),
+  mobility: () => axios.get('http://localhost:8081/mobility/actuator/health', { timeout: 5000 }),
+  airQuality: () => axios.get('http://localhost:8082/airquality/actuator/health', { timeout: 5000 }),
+  emergency: () => axios.get('http://localhost:8083/actuator/health', { timeout: 5000 }),
+  events: () => axios.get('http://localhost:8084/actuator/health', { timeout: 5000 }),
+  orchestration: () => axios.get('http://localhost:8085/orchestration/health', { timeout: 5000 }),
 };
 
 export default api;
