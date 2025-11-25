@@ -387,8 +387,14 @@ export const healthAPI = {
   
   mobility: async () => {
     try {
-      const response = await axios.get('http://localhost:8081/mobility/actuator/health', { timeout: 5000 });
-      return response;
+      const response = await axios.get('http://localhost:8081/mobility/actuator/health', { 
+        timeout: 5000,
+        validateStatus: () => true // Accepter tous les status codes
+      });
+      if (response.status === 200 && response.data?.status === 'UP') {
+        return response;
+      }
+      throw new Error('Service not healthy');
     } catch (error) {
       console.error('Mobility health check failed:', error.message);
       throw error;
@@ -414,8 +420,14 @@ export const healthAPI = {
   
   emergency: async () => {
     try {
-      const response = await axios.get('http://localhost:8083/actuator/health', { timeout: 5000 });
-      return response;
+      const response = await axios.get('http://localhost:8083/actuator/health', { 
+        timeout: 5000,
+        validateStatus: () => true
+      });
+      if (response.status === 200 && response.data?.status === 'UP') {
+        return response;
+      }
+      throw new Error('Service not healthy');
     } catch (error) {
       console.error('Emergency health check failed:', error.message);
       throw error;
