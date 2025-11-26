@@ -15,48 +15,45 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
       routes:
-         # Mobility Service - CONFIGURATION CORRIGÉE
+        # Mobility Service - CORRIGÉ
         - id: mobility-service
           uri: http://localhost:8081
           predicates:
             - Path=/api/mobility/**
           filters:
-            - RewritePath=/api/mobility/(?<segment>.*), /mobility/api/$\\{segment}
+            - RewritePath=/api/mobility/(?<segment>.*), /mobility/api/${segment}
 
-        # Air Quality Service - CONFIGURATION CORRIGÉE
+        # Air Quality Service - CORRIGÉ
         - id: air-quality-service-soap
           uri: http://air-quality-service:8082
           predicates:
             - Path=/api/air-quality/**
           filters:
-            - name: RewritePath
-              args:
-                regexp: /api/air-quality/(?<segment>.*)
-                replacement: /airquality/ws/${segment}
+            - RewritePath=/api/air-quality/(?<segment>.*), /airquality/ws/${segment}
 
-        # Emergency Service - CHEMIN CORRIGÉ
+        # Emergency Service - CORRIGÉ
         - id: emergency-service
           uri: http://localhost:8083
           predicates:
             - Path=/api/emergency/**
           filters:
-            - RewritePath=/api/emergency/(?<segment>.*), /api$\{segment}
+            - RewritePath=/api/emergency/(?<segment>.*), /api/${segment}
 
-        # Events Service - CHEMIN CORRIGÉ
+        # Events Service - CORRIGÉ
         - id: urban-events-service
           uri: http://localhost:8084
           predicates:
             - Path=/api/events/**
           filters:
-            - RewritePath=/api/events/(?<segment>.*), $\{segment}
+            - RewritePath=/api/events/(?<segment>.*), /${segment}
 
-        # Orchestration Service - CHEMIN CORRIGÉ
+        # Orchestration Service - CORRIGÉ
         - id: orchestration-service
           uri: http://localhost:8085
           predicates:
             - Path=/api/orchestration/**
           filters:
-            - RewritePath=/api/orchestration/(?<segment>.*), /orchestration$\{segment}
+            - RewritePath=/api/orchestration/(?<segment>.*), /orchestration/${segment}
 
 logging:
   level:
