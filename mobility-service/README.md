@@ -57,7 +57,7 @@ curl http://localhost:8081/mobility/api/transport-lines/number/BUS-101
 
 ### Via API Gateway
 ```bash
-curl http://localhost:8080/api/mobility/api/transport-lines
+curl http://localhost:8080/api/mobility/transport-lines
 ```
 
 ## Données de Test

@@ -343,12 +343,12 @@ const MobilityService = () => {
             fontSize: '0.875rem',
             whiteSpace: 'pre-wrap'
           }}>
-{`GET  /api/mobility/transport-lines
-GET  /api/mobility/transport-lines/number/{lineNumber}
-GET  /api/mobility/transport-lines/type/{type}
-GET  /api/mobility/schedules/line/{lineNumber}
-GET  /api/mobility/traffic-info/active
-GET  /api/mobility/traffic-info/severity/{severity}`}
+{`GET  /mobility/api/transport-lines
+GET  /mobility/api/transport-lines/number/{lineNumber}
+GET  /mobility/api/transport-lines/type/{type}
+GET  /mobility/api/schedules/line/{lineNumber}
+GET  /mobility/api/traffic-info/active
+GET  /mobility/api/traffic-info/severity/{severity}`}
           </code>
           <a 
             href="http://localhost:8081/mobility/swagger-ui.html" 

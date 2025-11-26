@@ -15,21 +15,24 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
       routes:
-        # Mobility Service - CHEMIN CORRIGÉ
+         # Mobility Service - CONFIGURATION CORRIGÉE
         - id: mobility-service
           uri: http://localhost:8081
           predicates:
             - Path=/api/mobility/**
           filters:
-            - RewritePath=/api/mobility/(?<segment>.*), /mobility/api$\{segment}
+            - RewritePath=/api/mobility/(?<segment>.*), /mobility/api/$\\{segment}
 
-        # Air Quality Service - CHEMIN CORRIGÉ
-        - id: air-quality-service
-          uri: http://localhost:8082
+        # Air Quality Service - CONFIGURATION CORRIGÉE
+        - id: air-quality-service-soap
+          uri: http://air-quality-service:8082
           predicates:
             - Path=/api/air-quality/**
           filters:
-            - RewritePath=/api/air-quality/(?<segment>.*), /airquality$\{segment}
+            - name: RewritePath
+              args:
+                regexp: /api/air-quality/(?<segment>.*)
+                replacement: /airquality/ws/${segment}
 
         # Emergency Service - CHEMIN CORRIGÉ
         - id: emergency-service

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// CONFIGURATION CORRIGÉE - URLs DIRECTES AVEC BONS CHEMINS
+// Configuration avec fallback automatique
 const API_CONFIG = {
   timeout: 15000,
   headers: {
@@ -8,16 +8,51 @@ const API_CONFIG = {
   }
 };
 
-// ==================== MOBILITY SERVICE (URLs CORRIGÉES) ====================
-export const mobilityAPI = {
-  getTransportLines: () => axios.get('http://localhost:8081/mobility/api/transport-lines', API_CONFIG),
-  getTransportLineByNumber: (lineNumber) => axios.get(`http://localhost:8081/mobility/api/transport-lines/number/${lineNumber}`, API_CONFIG),
-  getTransportLinesByType: (type) => axios.get(`http://localhost:8081/mobility/api/transport-lines/type/${type}`, API_CONFIG),
-  getSchedulesByLine: (lineNumber) => axios.get(`http://localhost:8081/mobility/api/schedules/line/${lineNumber}`, API_CONFIG),
-  getTrafficInfo: () => axios.get('http://localhost:8081/mobility/api/traffic-info/active', API_CONFIG),
+// Fonction utilitaire pour essayer Gateway puis fallback direct
+const tryRequest = async (gatewayRequest, directRequest) => {
+  try {
+    console.log('🔄 Tentative via Gateway...');
+    return await gatewayRequest();
+  } catch (gatewayError) {
+    console.log('❌ Gateway échoué, tentative directe...');
+    try {
+      return await directRequest();
+    } catch (directError) {
+      console.error('❌ Les deux méthodes ont échoué');
+      throw gatewayError; // Retourne l'erreur originale
+    }
+  }
 };
 
-// ==================== AIR QUALITY SERVICE (URLs CORRIGÉES) ====================
+// ==================== MOBILITY SERVICE ====================
+export const mobilityAPI = {
+  getTransportLines: () => tryRequest(
+    () => axios.get('http://localhost:8080/api/mobility/transport-lines', API_CONFIG),
+    () => axios.get('http://localhost:8081/mobility/api/transport-lines', API_CONFIG)
+  ),
+  
+  getTransportLineByNumber: (lineNumber) => tryRequest(
+    () => axios.get(`http://localhost:8080/api/mobility/transport-lines/number/${lineNumber}`, API_CONFIG),
+    () => axios.get(`http://localhost:8081/mobility/api/transport-lines/number/${lineNumber}`, API_CONFIG)
+  ),
+  
+  getTransportLinesByType: (type) => tryRequest(
+    () => axios.get(`http://localhost:8080/api/mobility/transport-lines/type/${type}`, API_CONFIG),
+    () => axios.get(`http://localhost:8081/mobility/api/transport-lines/type/${type}`, API_CONFIG)
+  ),
+  
+  getSchedulesByLine: (lineNumber) => tryRequest(
+    () => axios.get(`http://localhost:8080/api/mobility/schedules/line/${lineNumber}`, API_CONFIG),
+    () => axios.get(`http://localhost:8081/mobility/api/schedules/line/${lineNumber}`, API_CONFIG)
+  ),
+  
+  getTrafficInfo: () => tryRequest(
+    () => axios.get('http://localhost:8080/api/mobility/traffic-info/active', API_CONFIG),
+    () => axios.get('http://localhost:8081/mobility/api/traffic-info/active', API_CONFIG)
+  ),
+};
+
+// ==================== AIR QUALITY SERVICE ====================
 const soapConfig = {
   timeout: 20000,
   headers: { 
@@ -35,8 +70,11 @@ export const airQualityAPI = {
     <air:GetAllZonesRequest/>
   </soapenv:Body>
 </soapenv:Envelope>`;
-    
-    return axios.post('http://localhost:8082/airquality/ws', soapRequest, soapConfig);
+
+    return tryRequest(
+      () => axios.post('http://localhost:8080/api/air-quality/ws', soapRequest, soapConfig),
+      () => axios.post('http://localhost:8082/airquality/ws', soapRequest, soapConfig)
+    );
   },
   
   getAirQuality: async (zoneName) => {
@@ -49,8 +87,11 @@ export const airQualityAPI = {
     </air:GetAirQualityRequest>
   </soapenv:Body>
 </soapenv:Envelope>`;
-    
-    return axios.post('http://localhost:8082/airquality/ws', soapRequest, soapConfig);
+
+    return tryRequest(
+      () => axios.post('http://localhost:8080/api/air-quality/ws', soapRequest, soapConfig),
+      () => axios.post('http://localhost:8082/airquality/ws', soapRequest, soapConfig)
+    );
   },
   
   compareZones: async (zone1, zone2) => {
@@ -64,21 +105,43 @@ export const airQualityAPI = {
     </air:CompareZonesRequest>
   </soapenv:Body>
 </soapenv:Envelope>`;
-    
-    return axios.post('http://localhost:8082/airquality/ws', soapRequest, soapConfig);
+
+    return tryRequest(
+      () => axios.post('http://localhost:8080/api/air-quality/ws', soapRequest, soapConfig),
+      () => axios.post('http://localhost:8082/airquality/ws', soapRequest, soapConfig)
+    );
   },
 };
 
-// ==================== EMERGENCY SERVICE (URLs CORRIGÉES) ====================
+// ==================== EMERGENCY SERVICE ====================
 export const emergencyAPI = {
-  createAlert: (alertData) => axios.post('http://localhost:8083/api/emergencies', alertData, API_CONFIG),
-  getAlerts: () => axios.get('http://localhost:8083/api/emergencies', API_CONFIG),
-  getAlert: (emergencyId) => axios.get(`http://localhost:8083/api/emergencies/${emergencyId}`, API_CONFIG),
-  updateStatus: (emergencyId, statusData) => axios.put(`http://localhost:8083/api/emergencies/${emergencyId}/status`, statusData, API_CONFIG),
-  getStats: (hoursBack = 24) => axios.get(`http://localhost:8083/api/emergencies/stats?hoursBack=${hoursBack}`, API_CONFIG),
+  createAlert: (alertData) => tryRequest(
+    () => axios.post('http://localhost:8080/api/emergency/emergencies', alertData, API_CONFIG),
+    () => axios.post('http://localhost:8083/api/emergencies', alertData, API_CONFIG)
+  ),
+  
+  getAlerts: () => tryRequest(
+    () => axios.get('http://localhost:8080/api/emergency/emergencies', API_CONFIG),
+    () => axios.get('http://localhost:8083/api/emergencies', API_CONFIG)
+  ),
+  
+  getAlert: (emergencyId) => tryRequest(
+    () => axios.get(`http://localhost:8080/api/emergency/emergencies/${emergencyId}`, API_CONFIG),
+    () => axios.get(`http://localhost:8083/api/emergencies/${emergencyId}`, API_CONFIG)
+  ),
+  
+  updateStatus: (emergencyId, statusData) => tryRequest(
+    () => axios.put(`http://localhost:8080/api/emergency/emergencies/${emergencyId}/status`, statusData, API_CONFIG),
+    () => axios.put(`http://localhost:8083/api/emergencies/${emergencyId}/status`, statusData, API_CONFIG)
+  ),
+  
+  getStats: (hoursBack = 24) => tryRequest(
+    () => axios.get(`http://localhost:8080/api/emergency/emergencies/stats?hoursBack=${hoursBack}`, API_CONFIG),
+    () => axios.get(`http://localhost:8083/api/emergencies/stats?hoursBack=${hoursBack}`, API_CONFIG)
+  ),
 };
 
-// ==================== EVENTS SERVICE (URLs CORRIGÉES) ====================
+// ==================== EVENTS SERVICE ====================
 const graphqlConfig = {
   timeout: 15000,
   headers: {
@@ -86,75 +149,78 @@ const graphqlConfig = {
   }
 };
 
+const graphqlQueries = {
+  getAllEvents: `
+    query {
+      getAllEvents {
+        id
+        title
+        description
+        location
+        startDateTime
+        endDateTime
+        eventType
+        category
+        capacity
+        registeredAttendees
+        availableSpots
+        isFree
+        price
+        organizer
+        tags
+      }
+    }
+  `,
+  searchEvents: (keyword) => `
+    query {
+      searchEvents(keyword: "${keyword}") {
+        id
+        title
+        description
+        location
+        startDateTime
+        eventType
+        category
+        isFree
+        availableSpots
+        organizer
+        tags
+      }
+    }
+  `,
+  getUpcomingEvents: `
+    query {
+      getUpcomingEvents {
+        id
+        title
+        location
+        startDateTime
+        endDateTime
+        availableSpots
+        category
+        eventType
+        organizer
+        tags
+      }
+    }
+  `
+};
+
 export const eventsAPI = {
-  getAllEvents: async () => {
-    return axios.post('http://localhost:8084/graphql', {
-      query: `
-        query {
-          getAllEvents {
-            id
-            title
-            description
-            location
-            startDateTime
-            endDateTime
-            eventType
-            category
-            capacity
-            registeredAttendees
-            availableSpots
-            isFree
-            price
-            organizer
-            tags
-          }
-        }
-      `
-    }, graphqlConfig);
-  },
+  getAllEvents: () => tryRequest(
+    () => axios.post('http://localhost:8080/api/events/graphql', { query: graphqlQueries.getAllEvents }, graphqlConfig),
+    () => axios.post('http://localhost:8084/graphql', { query: graphqlQueries.getAllEvents }, graphqlConfig)
+  ),
   
-  searchEvents: async (keyword) => {
-    return axios.post('http://localhost:8084/graphql', {
-      query: `
-        query {
-          searchEvents(keyword: "${keyword}") {
-            id
-            title
-            description
-            location
-            startDateTime
-            eventType
-            category
-            isFree
-            availableSpots
-            organizer
-            tags
-          }
-        }
-      `
-    }, graphqlConfig);
-  },
+  searchEvents: (keyword) => tryRequest(
+    () => axios.post('http://localhost:8080/api/events/graphql', { query: graphqlQueries.searchEvents(keyword) }, graphqlConfig),
+    () => axios.post('http://localhost:8084/graphql', { query: graphqlQueries.searchEvents(keyword) }, graphqlConfig)
+  ),
   
-  getUpcomingEvents: async () => {
-    return axios.post('http://localhost:8084/graphql', {
-      query: `
-        query {
-          getUpcomingEvents {
-            id
-            title
-            location
-            startDateTime
-            endDateTime
-            availableSpots
-            category
-            eventType
-            organizer
-            tags
-          }
-        }
-      `
-    }, graphqlConfig);
-  },
+  getUpcomingEvents: () => tryRequest(
+    () => axios.post('http://localhost:8080/api/events/graphql', { query: graphqlQueries.getUpcomingEvents }, graphqlConfig),
+    () => axios.post('http://localhost:8084/graphql', { query: graphqlQueries.getUpcomingEvents }, graphqlConfig)
+  ),
   
   filterEvents: async (filters) => {
     const { type, category, freeOnly } = filters;
@@ -163,67 +229,120 @@ export const eventsAPI = {
     if (category) filterArgs.push(`category: "${category}"`);
     if (freeOnly !== undefined) filterArgs.push(`freeOnly: ${freeOnly}`);
     
-    return axios.post('http://localhost:8084/graphql', {
-      query: `
-        query {
-          filterEvents(${filterArgs.join(', ')}) {
-            id
-            title
-            location
-            startDateTime
-            eventType
-            category
-            isFree
-            availableSpots
-            organizer
-            tags
-          }
+    const query = `
+      query {
+        filterEvents(${filterArgs.join(', ')}) {
+          id
+          title
+          location
+          startDateTime
+          eventType
+          category
+          isFree
+          availableSpots
+          organizer
+          tags
         }
-      `
-    }, graphqlConfig);
+      }
+    `;
+
+    return tryRequest(
+      () => axios.post('http://localhost:8080/api/events/graphql', { query }, graphqlConfig),
+      () => axios.post('http://localhost:8084/graphql', { query }, graphqlConfig)
+    );
   },
   
   registerToEvent: async (eventId) => {
-    return axios.post('http://localhost:8084/graphql', {
-      query: `
-        mutation {
-          registerAttendee(eventId: ${eventId}) {
-            id
-            title
-            registeredAttendees
-            availableSpots
-          }
+    const query = `
+      mutation {
+        registerAttendee(eventId: ${eventId}) {
+          id
+          title
+          registeredAttendees
+          availableSpots
         }
-      `
-    }, graphqlConfig);
+      }
+    `;
+
+    return tryRequest(
+      () => axios.post('http://localhost:8080/api/events/graphql', { query }, graphqlConfig),
+      () => axios.post('http://localhost:8084/graphql', { query }, graphqlConfig)
+    );
   },
 };
 
-// ==================== ORCHESTRATION SERVICE (URLs CORRIGÉES) ====================
+// ==================== ORCHESTRATION SERVICE ====================
 export const orchestrationAPI = {
-  planJourney: (startLocation, endLocation) => axios.post(
-    'http://localhost:8085/orchestration/plan-journey',
-    null,
-    {
-      params: {
-        startLocation: startLocation,
-        endLocation: endLocation
-      },
-      timeout: 20000
-    }
+  planJourney: (startLocation, endLocation) => tryRequest(
+    () => axios.post(
+      'http://localhost:8080/api/orchestration/plan-journey',
+      null,
+      {
+        params: { startLocation, endLocation },
+        timeout: 20000
+      }
+    ),
+    () => axios.post(
+      'http://localhost:8085/orchestration/plan-journey',
+      null,
+      {
+        params: { startLocation, endLocation },
+        timeout: 20000
+      }
+    )
   ),
   
-  health: () => axios.get('http://localhost:8085/orchestration/health', { timeout: 5000 }),
+  health: () => tryRequest(
+    () => axios.get('http://localhost:8080/api/orchestration/health', { timeout: 5000 }),
+    () => axios.get('http://localhost:8085/orchestration/health', { timeout: 5000 })
+  ),
 };
 
-// ==================== HEALTH CHECKS (URLs CORRIGÉES) ====================
+// ==================== HEALTH CHECKS ====================
+const healthCheck = async (url) => {
+  try {
+    const response = await axios.get(url, { 
+      timeout: 5000,
+      validateStatus: () => true
+    });
+    return { data: { status: response.status === 200 ? 'UP' : 'DOWN' } };
+  } catch (error) {
+    return { data: { status: 'DOWN' } };
+  }
+};
+
 export const healthAPI = {
-  gateway: () => axios.get('http://localhost:8080/actuator/health', { timeout: 5000 }),
-  mobility: () => axios.get('http://localhost:8081/mobility/actuator/health', { timeout: 5000 }),
-  airQuality: () => axios.get('http://localhost:8082/airquality/actuator/health', { timeout: 5000 }),
-  emergency: () => axios.get('http://localhost:8083/actuator/health', { timeout: 5000 }),
-  events: () => axios.get('http://localhost:8084/actuator/health', { timeout: 5000 }),
-  orchestration: () => axios.get('http://localhost:8085/orchestration/health', { timeout: 5000 }),
+  gateway: () => healthCheck('http://localhost:8080/actuator/health'),
+  
+  mobility: async () => {
+    const gatewayResult = await healthCheck('http://localhost:8080/api/mobility/actuator/health');
+    if (gatewayResult.data.status === 'UP') return gatewayResult;
+    return await healthCheck('http://localhost:8081/mobility/actuator/health');
+  },
+  
+  airQuality: async () => {
+    const gatewayResult = await healthCheck('http://localhost:8080/api/air-quality/actuator/health');
+    if (gatewayResult.data.status === 'UP') return gatewayResult;
+    return await healthCheck('http://localhost:8082/airquality/actuator/health');
+  },
+  
+  emergency: async () => {
+    const gatewayResult = await healthCheck('http://localhost:8080/api/emergency/actuator/health');
+    if (gatewayResult.data.status === 'UP') return gatewayResult;
+    return await healthCheck('http://localhost:8083/actuator/health');
+  },
+  
+  events: async () => {
+    const gatewayResult = await healthCheck('http://localhost:8080/api/events/actuator/health');
+    if (gatewayResult.data.status === 'UP') return gatewayResult;
+    return await healthCheck('http://localhost:8084/actuator/health');
+  },
+  
+  orchestration: async () => {
+    const gatewayResult = await healthCheck('http://localhost:8080/api/orchestration/health');
+    if (gatewayResult.data.status === 'UP') return gatewayResult;
+    return await healthCheck('http://localhost:8085/orchestration/health');
+  },
 };
 
 export default axios;

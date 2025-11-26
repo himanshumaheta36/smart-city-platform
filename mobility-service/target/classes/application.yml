@@ -40,3 +40,5 @@ management:
 logging:
   level:
     com.smartcity.mobility: INFO
+    org.springframework.web: DEBUG
+    org.springframework.web.cors: DEBUG
