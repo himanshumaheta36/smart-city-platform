@@ -26,17 +26,42 @@ const AirQualityService = () => {
 
   // Helper function pour extraire le texte d'un élément XML
   const getTextContent = (xmlDoc, tagName) => {
-    // Essayer avec le préfixe ns2:
     let element = xmlDoc.getElementsByTagName('ns2:' + tagName)[0];
     if (!element) {
-      // Essayer sans préfixe
       element = xmlDoc.getElementsByTagName(tagName)[0];
     }
     if (!element) {
-      // Essayer avec d'autres préfixes communs
       element = xmlDoc.getElementsByTagName('tns:' + tagName)[0];
     }
     return element?.textContent || '';
+  };
+
+  // Fonction avec fallback pour les appels SOAP
+  const callSoapService = async (soapRequest) => {
+    const soapConfig = {
+      headers: { 
+        'Content-Type': 'text/xml; charset=utf-8',
+        'SOAPAction': ''
+      },
+      timeout: 20000
+    };
+
+    try {
+      console.log('🔄 Tentative via Gateway...');
+      const response = await axios.post('http://localhost:8080/api/air-quality/ws', soapRequest, soapConfig);
+      console.log('✅ Réponse reçue via Gateway');
+      return response;
+    } catch (gatewayError) {
+      console.log('❌ Gateway échoué, tentative directe...');
+      try {
+        const response = await axios.post('http://localhost:8082/airquality/ws', soapRequest, soapConfig);
+        console.log('✅ Réponse reçue directement');
+        return response;
+      } catch (directError) {
+        console.error('❌ Les deux méthodes ont échoué');
+        throw gatewayError;
+      }
+    }
   };
 
   const loadAllZones = async () => {
@@ -51,20 +76,7 @@ const AirQualityService = () => {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-      console.log('🔵 Envoi requête SOAP GetAllZones');
-      
-      const response = await axios.post(
-        'http://localhost:8082/airquality/ws',
-        soapRequest,
-        { 
-          headers: { 
-            'Content-Type': 'text/xml; charset=utf-8',
-            'SOAPAction': ''
-          } 
-        }
-      );
-
-      console.log('✅ Réponse reçue:', response.data);
+      const response = await callSoapService(soapRequest);
 
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(response.data, 'text/xml');
@@ -87,16 +99,13 @@ const AirQualityService = () => {
       console.log('📊 Nombre d\'éléments trouvés:', airQualityElements.length);
 
       if (airQualityElements.length === 0) {
-        console.warn('⚠️ Aucun élément airQualityData trouvé. Structure XML:', xmlDoc.documentElement.outerHTML);
         setError('Aucune zone trouvée dans la réponse');
         setZones([]);
         return;
       }
 
-      const parsedZones = Array.from(airQualityElements).map((elem, index) => {
-        console.log(`Parsing zone ${index + 1}:`, elem.outerHTML);
-        
-        const zone = {
+      const parsedZones = Array.from(airQualityElements).map((elem) => {
+        return {
           zoneName: getTextContent(elem, 'zoneName'),
           aqiValue: parseFloat(getTextContent(elem, 'aqiValue')) || 0,
           aqiCategory: getTextContent(elem, 'aqiCategory'),
@@ -107,9 +116,6 @@ const AirQualityService = () => {
           co: parseFloat(getTextContent(elem, 'co')) || 0,
           so2: parseFloat(getTextContent(elem, 'so2')) || 0,
         };
-        
-        console.log('Zone parsée:', zone);
-        return zone;
       });
 
       setZones(parsedZones);
@@ -117,11 +123,6 @@ const AirQualityService = () => {
     } catch (error) {
       console.error('❌ Erreur chargement zones:', error);
       setError('Erreur lors du chargement des zones: ' + error.message);
-      
-      if (error.response) {
-        console.error('Response data:', error.response.data);
-        console.error('Response status:', error.response.status);
-      }
     } finally {
       setLoading(false);
     }
@@ -144,20 +145,7 @@ const AirQualityService = () => {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-      console.log('🔵 Vérification qualité air pour:', selectedZone);
-
-      const response = await axios.post(
-        'http://localhost:8082/airquality/ws',
-        soapRequest,
-        { 
-          headers: { 
-            'Content-Type': 'text/xml; charset=utf-8',
-            'SOAPAction': ''
-          } 
-        }
-      );
-
-      console.log('✅ Réponse reçue');
+      const response = await callSoapService(soapRequest);
 
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(response.data, 'text/xml');
@@ -175,7 +163,6 @@ const AirQualityService = () => {
       };
 
       setAirQualityData(data);
-      console.log('✅ Données qualité air:', data);
     } catch (error) {
       console.error('❌ Erreur vérification qualité:', error);
       setError('Erreur lors de la vérification: ' + error.message);
@@ -202,18 +189,7 @@ const AirQualityService = () => {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-      console.log('🔵 Comparaison zones:', selectedZone, 'vs', zone2);
-
-      const response = await axios.post(
-        'http://localhost:8082/airquality/ws',
-        soapRequest,
-        { 
-          headers: { 
-            'Content-Type': 'text/xml; charset=utf-8',
-            'SOAPAction': ''
-          } 
-        }
-      );
+      const response = await callSoapService(soapRequest);
 
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(response.data, 'text/xml');
@@ -224,7 +200,6 @@ const AirQualityService = () => {
       }
 
       setComparisonResult(result || 'Résultat non disponible');
-      console.log('✅ Comparaison:', result);
     } catch (error) {
       console.error('❌ Erreur comparaison:', error);
       setError('Erreur lors de la comparaison: ' + error.message);
@@ -273,10 +248,10 @@ const AirQualityService = () => {
             <strong>Protocole:</strong> SOAP
           </div>
           <div style={{ background: 'rgba(255,255,255,0.2)', padding: '0.5rem 1rem', borderRadius: '8px' }}>
-            <strong>Port:</strong> 8082
+            <strong>Gateway:</strong> 8080
           </div>
           <div style={{ background: 'rgba(255,255,255,0.2)', padding: '0.5rem 1rem', borderRadius: '8px' }}>
-            <strong>Endpoint:</strong> /airquality/ws
+            <strong>Endpoint:</strong> /api/air-quality/ws
           </div>
         </div>
       </div>
@@ -609,13 +584,13 @@ GetAllZonesRequest - Lister toutes les zones
 CompareZonesRequest - Comparer deux zones`}
           </code>
           <a 
-            href="http://localhost:8082/airquality/ws/airquality.wsdl" 
+            href="http://localhost:8080/api/air-quality/ws/airquality.wsdl"  // ← CORRIGÉ: Via Gateway
             target="_blank" 
             rel="noopener noreferrer"
             className="btn btn-primary"
             style={{ marginTop: '1rem', display: 'inline-block' }}
           >
-            📄 Voir WSDL
+            📄 Voir WSDL via Gateway
           </a>
         </div>
       </div>
