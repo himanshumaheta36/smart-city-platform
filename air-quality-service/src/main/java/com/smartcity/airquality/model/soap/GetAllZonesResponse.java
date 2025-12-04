@@ -5,13 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "", propOrder = {
-    "airQualityData"
-})
+@XmlType(name = "", propOrder = {"airQualityData"})
 @XmlRootElement(name = "GetAllZonesResponse", namespace = "http://smartcity.com/airquality")
 public class GetAllZonesResponse {
 
-    @XmlElement(required = true)
+    @XmlElement(name = "airQualityData", namespace = "http://smartcity.com/airquality")
     protected List<AirQualityData> airQualityData;
 
     public List<AirQualityData> getAirQualityData() {

@@ -368,7 +368,7 @@ const Dashboard = () => {
             <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>📚 Documentation</h3>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <a 
-                href="http://localhost:8082/airquality/ws/airquality.wsdl" 
+                href="http://localhost:8080/api/air-quality/ws/airquality.wsdl" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 style={{ 
@@ -395,7 +395,7 @@ const Dashboard = () => {
                   fontSize: '0.875rem'
                 }}
               >
-                🔍 GraphiQL
+                🔍 GraphiQL (Direct)
               </a>
               <a 
                 href="http://localhost:8081/mobility/swagger-ui.html" 

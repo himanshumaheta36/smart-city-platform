@@ -3,17 +3,14 @@ package com.smartcity.airquality.model.soap;
 import jakarta.xml.bind.annotation.*;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "", propOrder = {
-    "zone1",
-    "zone2"
-})
+@XmlType(name = "", propOrder = {"zone1", "zone2"})
 @XmlRootElement(name = "CompareZonesRequest", namespace = "http://smartcity.com/airquality")
 public class CompareZonesRequest {
 
-    @XmlElement(required = true)
+    @XmlElement(name = "zone1", namespace = "http://smartcity.com/airquality", required = true)
     protected String zone1;
 
-    @XmlElement(required = true)
+    @XmlElement(name = "zone2", namespace = "http://smartcity.com/airquality", required = true)
     protected String zone2;
 
     public String getZone1() {

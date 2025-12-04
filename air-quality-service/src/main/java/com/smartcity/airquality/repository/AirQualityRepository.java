@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface AirQualityRepository extends JpaRepository<AirQualityData, Long> {
@@ -18,16 +17,6 @@ public interface AirQualityRepository extends JpaRepository<AirQualityData, Long
     
     // Trouver les données par catégorie AQI
     List<AirQualityData> findByAqiCategory(String aqiCategory);
-    
-    // Trouver les données les plus récentes pour chaque zone
-    @Query("SELECT aqd FROM AirQualityData aqd WHERE aqd.measurementDate = " +
-           "(SELECT MAX(aqd2.measurementDate) FROM AirQualityData aqd2 WHERE aqd2.zoneName = aqd.zoneName)")
-    List<AirQualityData> findLatestForAllZones();
-    
-    // Trouver la donnée la plus récente pour une zone spécifique
-    @Query("SELECT aqd FROM AirQualityData aqd WHERE aqd.zoneName = :zoneName " +
-           "ORDER BY aqd.measurementDate DESC LIMIT 1")
-    Optional<AirQualityData> findLatestByZoneName(@Param("zoneName") String zoneName);
     
     // Trouver les données dans une période spécifique
     List<AirQualityData> findByMeasurementDateBetween(LocalDateTime startDate, LocalDateTime endDate);

@@ -30,13 +30,28 @@ public class AirQualityEndpoint {
     public GetAirQualityResponse getAirQuality(@RequestPayload GetAirQualityRequest request) {
         GetAirQualityResponse response = new GetAirQualityResponse();
         
+        // Debug: afficher l'objet request complet
+        System.out.println("📥 [SOAP] GetAirQuality - Request object: " + request);
+        System.out.println("📥 [SOAP] GetAirQuality - Request class: " + request.getClass().getName());
+        
         String zoneName = request.getZoneName();
+        System.out.println("📥 [SOAP] GetAirQuality - Zone demandée: '" + zoneName + "'");
+        
+        if (zoneName == null || zoneName.trim().isEmpty()) {
+            System.out.println("⚠️ [SOAP] zoneName est null ou vide, retour données par défaut");
+            response.setAirQualityData(createDefaultAirQualityData("Zone inconnue"));
+            return response;
+        }
+        
         Optional<AirQualityData> airQualityData = airQualityService.getLatestAirQualityByZone(zoneName);
         
         if (airQualityData.isPresent()) {
-            response.setAirQualityData(mapToSoapAirQualityData(airQualityData.get()));
+            AirQualityData data = airQualityData.get();
+            System.out.println("✅ [SOAP] Données réelles trouvées - Zone: " + data.getZoneName() + 
+                             ", AQI: " + data.getAqiValue());
+            response.setAirQualityData(mapToSoapAirQualityData(data));
         } else {
-            // Retourner des données par défaut si la zone n'est pas trouvée
+            System.out.println("⚠️ [SOAP] Aucune donnée trouvée, retour données par défaut");
             response.setAirQualityData(createDefaultAirQualityData(zoneName));
         }
         
@@ -48,7 +63,12 @@ public class AirQualityEndpoint {
     public GetAllZonesResponse getAllZones(@RequestPayload GetAllZonesRequest request) {
         GetAllZonesResponse response = new GetAllZonesResponse();
         
+        System.out.println("📥 [SOAP] GetAllZones");
+        
         List<AirQualityData> latestData = airQualityService.getLatestAirQualityForAllZones();
+        
+        System.out.println("📤 [SOAP] Retour de " + latestData.size() + " zones");
+        
         List<com.smartcity.airquality.model.soap.AirQualityData> airQualityDataList = latestData.stream()
                 .map(this::mapToSoapAirQualityData)
                 .toList();
@@ -62,16 +82,29 @@ public class AirQualityEndpoint {
     public CompareZonesResponse compareZones(@RequestPayload CompareZonesRequest request) {
         CompareZonesResponse response = new CompareZonesResponse();
         
+        // Debug
+        System.out.println("📥 [SOAP] CompareZones - Request object: " + request);
+        
         String zone1 = request.getZone1();
         String zone2 = request.getZone2();
         
+        System.out.println("📥 [SOAP] CompareZones - Zone1: '" + zone1 + "', Zone2: '" + zone2 + "'");
+        
+        if (zone1 == null || zone2 == null || zone1.trim().isEmpty() || zone2.trim().isEmpty()) {
+            response.setComparisonResult("Erreur: les noms de zones sont requis");
+            return response;
+        }
+        
         String comparisonResult = airQualityService.compareZones(zone1, zone2);
+        
+        System.out.println("📤 [SOAP] Résultat: " + comparisonResult);
+        
         response.setComparisonResult(comparisonResult);
         
         return response;
     }
     
-    private com.smartcity.airquality.model.soap.AirQualityData mapToSoapAirQualityData(com.smartcity.airquality.model.AirQualityData entity) {
+    private com.smartcity.airquality.model.soap.AirQualityData mapToSoapAirQualityData(AirQualityData entity) {
         com.smartcity.airquality.model.soap.AirQualityData soapData = new com.smartcity.airquality.model.soap.AirQualityData();
         soapData.setZoneName(entity.getZoneName());
         soapData.setAqiValue(entity.getAqiValue());
@@ -88,6 +121,8 @@ public class AirQualityEndpoint {
     }
     
     private com.smartcity.airquality.model.soap.AirQualityData createDefaultAirQualityData(String zoneName) {
+        System.out.println("⚠️ [SOAP] Création données par défaut pour: " + zoneName);
+        
         com.smartcity.airquality.model.soap.AirQualityData defaultData = new com.smartcity.airquality.model.soap.AirQualityData();
         defaultData.setZoneName(zoneName);
         defaultData.setAqiValue(50.0);
@@ -105,7 +140,9 @@ public class AirQualityEndpoint {
     
     private XMLGregorianCalendar convertToXmlGregorianCalendar(LocalDateTime localDateTime) {
         try {
-            GregorianCalendar gregorianCalendar = GregorianCalendar.from(localDateTime.atZone(java.time.ZoneId.systemDefault()));
+            GregorianCalendar gregorianCalendar = GregorianCalendar.from(
+                localDateTime.atZone(java.time.ZoneId.systemDefault())
+            );
             return DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar);
         } catch (DatatypeConfigurationException e) {
             throw new RuntimeException("Error converting LocalDateTime to XMLGregorianCalendar", e);

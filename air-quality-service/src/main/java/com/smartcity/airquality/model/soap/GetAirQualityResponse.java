@@ -3,13 +3,11 @@ package com.smartcity.airquality.model.soap;
 import jakarta.xml.bind.annotation.*;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "", propOrder = {
-    "airQualityData"
-})
+@XmlType(name = "", propOrder = {"airQualityData"})
 @XmlRootElement(name = "GetAirQualityResponse", namespace = "http://smartcity.com/airquality")
 public class GetAirQualityResponse {
 
-    @XmlElement(required = true)
+    @XmlElement(name = "airQualityData", namespace = "http://smartcity.com/airquality")
     protected AirQualityData airQualityData;
 
     public AirQualityData getAirQualityData() {
