@@ -113,7 +113,7 @@ curl http://localhost:8085/orchestration/health
 
 ```bash
 # Test via API Gateway
-curl http://localhost:8080/api/mobility/api/transport-lines
+curl http://localhost:8080/api/mobility/transport-lines
 
 # Should return JSON with transport lines
 ```
@@ -142,10 +142,10 @@ http://localhost:3000
 
 ```bash
 # Get all transport lines
-curl http://localhost:8080/api/mobility/api/transport-lines | jq
+curl http://localhost:8080/api/mobility/transport-lines | jq
 
 # Get specific line
-curl http://localhost:8080/api/mobility/api/transport-lines/number/BUS-101 | jq
+curl http://localhost:8080/api/mobility/transport-lines/number/BUS-101 | jq
 ```
 
 ### 2. Air Quality Service (SOAP)

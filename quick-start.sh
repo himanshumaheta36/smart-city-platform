@@ -147,13 +147,13 @@ check_health() {
     
     # CORRECTED health check endpoints
     SERVICES=(
-        "http://localhost:8080/actuator/health:API Gateway"
-        "http://localhost:8081/actuator/health:Mobility Service" 
-        "http://localhost:8082/actuator/health:Air Quality Service"
-        "http://localhost:8083/actuator/health:Emergency Service"
-        "http://localhost:8084/actuator/health:Urban Events Service"
-        "http://localhost:8085/actuator/health:Orchestration Service"
-        "http://localhost:3000:Client Web"
+        "http://localhost:8080/actuator/health :API Gateway"
+        "http://localhost:8081/mobility/actuator/health :Mobility Service" 
+        "http://localhost:8082/airquality/actuator/health :Air Quality Service"
+        "http://localhost:8083/api/emergencies/health :Emergency Service"
+        "http://localhost:8084/actuator/health :Urban Events Service"
+        "http://localhost:8085/orchestration/health :Orchestration Service"
+        "http://localhost:3000 :Client Web"
     )
     
     ALL_HEALTHY=true

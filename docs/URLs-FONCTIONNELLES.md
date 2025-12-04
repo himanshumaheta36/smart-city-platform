@@ -33,7 +33,7 @@
   - Password: `password`
 
 **Via API Gateway**:
-- http://localhost:8080/api/mobility/api/transport-lines
+- http://localhost:8080/api/mobility/transport-lines
 
 ---
 

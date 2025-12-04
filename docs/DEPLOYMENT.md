@@ -126,7 +126,7 @@ curl http://localhost:8085/orchestration/health
 #### 4.2 Test Fonctionnel Rapide
 ```bash
 # Test via API Gateway
-curl http://localhost:8080/api/mobility/api/transport-lines
+curl http://localhost:8080/api/mobility/transport-lines
 
 # Doit retourner une liste de lignes de transport
 ```
@@ -144,7 +144,7 @@ curl http://localhost:3000
 
 #### 5.1 Test Mobilité (REST)
 ```bash
-curl http://localhost:8080/api/mobility/api/transport-lines | jq
+curl http://localhost:8080/api/mobility/transport-lines | jq
 ```
 
 #### 5.2 Test Qualité d'Air (SOAP)
