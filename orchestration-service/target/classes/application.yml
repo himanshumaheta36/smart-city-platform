@@ -5,6 +5,36 @@ spring:
   application:
     name: orchestration-service
 
+# Configuration des services Smart City
+services:
+  mobility:
+    url: http://localhost:8081/mobility
+  air-quality:
+    url: http://localhost:8082/airquality
+  events:
+    url: http://localhost:8084
+
+# Configuration Google Gemini
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  model: ${GEMINI_MODEL:gemini-2.0-flash}
+  url: https://generativelanguage.googleapis.com/v1beta
+  enabled: ${GEMINI_ENABLED:true}
+
 logging:
   level:
     com.smartcity.orchestration: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+services:
+  mobility:
+    url: http://mobility-service:8081/mobility
+  air-quality:
+    url: http://air-quality-service:8082/airquality
+  events:
+    url: http://urban-events-service:8084

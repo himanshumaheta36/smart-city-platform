@@ -108,7 +108,7 @@ services:
       - smart-city-network
     restart: unless-stopped
 
-  # Service d'Orchestration
+    # Service d'Orchestration avec Gemini AI
   orchestration-service:
     build:
       context: ./orchestration-service
@@ -118,6 +118,9 @@ services:
       - "8085:8085"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash}
+      - GEMINI_ENABLED=${GEMINI_ENABLED:-true}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8085/orchestration/health"]
       interval: 30s
@@ -130,6 +133,7 @@ services:
     depends_on:
       - mobility-service
       - air-quality-service
+      - urban-events-service
 
   # Client Web React
   client-web:

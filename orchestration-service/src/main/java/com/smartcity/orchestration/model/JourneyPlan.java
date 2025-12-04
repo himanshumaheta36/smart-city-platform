@@ -1,3 +1,4 @@
+// src/main/java/com/smartcity/orchestration/model/JourneyPlan.java
 package com.smartcity.orchestration.model;
 
 import java.util.List;
@@ -10,7 +11,7 @@ public class JourneyPlan {
     private String recommendation;
     private boolean airQualityGood;
 
-    // Constructors
+    // Constructeurs
     public JourneyPlan() {}
 
     public JourneyPlan(String startLocation, String endLocation) {
@@ -18,7 +19,7 @@ public class JourneyPlan {
         this.endLocation = endLocation;
     }
 
-    // Getters and Setters
+    // Getters et Setters
     public String getStartLocation() { return startLocation; }
     public void setStartLocation(String startLocation) { this.startLocation = startLocation; }
 
