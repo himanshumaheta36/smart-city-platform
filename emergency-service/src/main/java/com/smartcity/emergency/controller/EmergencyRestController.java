@@ -19,6 +19,18 @@ public class EmergencyRestController {
     @Autowired
     private EmergencyService emergencyService;
 
+    @GetMapping
+    public ResponseEntity<?> getActiveEmergencies() {
+        try {
+            List<EmergencyAlert> emergencies = emergencyService.getActiveEmergencies();
+            return ResponseEntity.ok(emergencies);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                Map.of("error", "Failed to get emergencies: " + e.getMessage())
+            );
+        }
+    }
+
     @PostMapping
     public ResponseEntity<?> createEmergency(@RequestBody CreateEmergencyRequest request) {
         try {
@@ -45,18 +57,6 @@ public class EmergencyRestController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
                 Map.of("error", "Failed to create emergency: " + e.getMessage())
-            );
-        }
-    }
-
-    @GetMapping
-    public ResponseEntity<?> getActiveEmergencies() {
-        try {
-            List<EmergencyAlert> emergencies = emergencyService.getActiveEmergencies();
-            return ResponseEntity.ok(emergencies);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                Map.of("error", "Failed to get emergencies: " + e.getMessage())
             );
         }
     }
@@ -155,7 +155,6 @@ public class EmergencyRestController {
         private int affectedPeople;
         private List<String> tags;
 
-        // Getters et Setters
         public String getReporterId() { return reporterId; }
         public void setReporterId(String reporterId) { this.reporterId = reporterId; }
         
@@ -189,7 +188,6 @@ public class EmergencyRestController {
         private String responderId;
         private String updateNotes;
 
-        // Getters et Setters
         public String getStatus() { return status; }
         public void setStatus(String status) { this.status = status; }
         

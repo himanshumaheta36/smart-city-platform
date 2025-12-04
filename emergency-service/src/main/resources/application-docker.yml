@@ -1,6 +1,5 @@
 server:
   port: 8083
-  # Forcer HTTP/1.1 pour le serveur web
   http2:
     enabled: false
 
@@ -28,7 +27,6 @@ spring:
     init:
       mode: always
 
-# gRPC sur un port séparé
 grpc:
   server:
     port: 9090

@@ -6,6 +6,8 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -14,8 +16,9 @@ spring:
             allowedMethods: "*"
             allowedHeaders: "*"
             allowCredentials: true
+            exposedHeaders: "*"
       routes:
-        # Mobility Service - CORRIGÉ
+        # ============ MOBILITY SERVICE ============
         - id: mobility-service
           uri: http://localhost:8081
           predicates:
@@ -23,37 +26,102 @@ spring:
           filters:
             - RewritePath=/api/mobility/(?<segment>.*), /mobility/api/${segment}
 
-        # Air Quality Service - CORRIGÉ
-        - id: air-quality-service-soap
-          uri: http://air-quality-service:8082
+        - id: mobility-actuator
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/mobility/actuator/**
+          filters:
+            - RewritePath=/api/mobility/actuator/(?<segment>.*), /mobility/actuator/${segment}
+
+        # ============ AIR QUALITY SERVICE ============
+        - id: air-quality-service
+          uri: http://localhost:8082
           predicates:
             - Path=/api/air-quality/**
           filters:
-            - RewritePath=/api/air-quality/(?<segment>.*), /airquality/ws/${segment}
+            - RewritePath=/api/air-quality/(?<segment>.*), /airquality/${segment}
 
-        # Emergency Service - CORRIGÉ
-        - id: emergency-service
+        - id: air-quality-actuator
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/air-quality/actuator/**
+          filters:
+            - RewritePath=/api/air-quality/actuator/(?<segment>.*), /airquality/actuator/${segment}
+
+        # ============ EMERGENCY SERVICE ============
+        # Route pour /api/emergency (sans rien après)
+        - id: emergency-service-root
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/emergency
+            - Method=GET,POST,PUT,DELETE,OPTIONS
+          filters:
+            - SetPath=/api/emergencies
+
+        # Route pour /api/emergency/* (avec quelque chose après)
+        - id: emergency-service-path
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/emergency/{segment}
+          filters:
+            - SetPath=/api/emergencies/{segment}
+
+        # Route pour /api/emergency/** (chemins plus profonds)
+        - id: emergency-service-deep
           uri: http://localhost:8083
           predicates:
             - Path=/api/emergency/**
           filters:
-            - RewritePath=/api/emergency/(?<segment>.*), /api/${segment}
+            - RewritePath=/api/emergency/(?<segment>.*), /api/emergencies/${segment}
 
-        # Events Service - CORRIGÉ
-        - id: urban-events-service
+        # Emergency Actuator
+        - id: emergency-actuator
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/emergency/actuator/**
+          filters:
+            - RewritePath=/api/emergency/actuator/(?<segment>.*), /actuator/${segment}
+
+        # ============ EVENTS SERVICE (GraphQL) ============
+        - id: urban-events-graphql
           uri: http://localhost:8084
           predicates:
-            - Path=/api/events/**
+            - Path=/api/events/graphql
           filters:
-            - RewritePath=/api/events/(?<segment>.*), /${segment}
+            - SetPath=/graphql
 
-        # Orchestration Service - CORRIGÉ
+        - id: urban-events-graphiql
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/events/graphiql/**
+          filters:
+            - RewritePath=/api/events/graphiql(?<segment>.*), /graphiql${segment}
+
+        - id: events-actuator
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/events/actuator/**
+          filters:
+            - RewritePath=/api/events/actuator/(?<segment>.*), /actuator/${segment}
+
+        # ============ ORCHESTRATION SERVICE ============
         - id: orchestration-service
           uri: http://localhost:8085
           predicates:
             - Path=/api/orchestration/**
           filters:
             - RewritePath=/api/orchestration/(?<segment>.*), /orchestration/${segment}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    gateway:
+      enabled: true
+    health:
+      show-details: always
 
 logging:
   level:

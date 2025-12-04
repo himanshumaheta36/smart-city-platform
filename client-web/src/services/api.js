@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Configuration avec fallback automatique
+// Configuration de base
 const API_CONFIG = {
   timeout: 15000,
   headers: {
@@ -11,15 +11,14 @@ const API_CONFIG = {
 // Fonction utilitaire pour essayer Gateway puis fallback direct
 const tryRequest = async (gatewayRequest, directRequest) => {
   try {
-    console.log('🔄 Tentative via Gateway...');
-    return await gatewayRequest();
+    const result = await gatewayRequest();
+    return result;
   } catch (gatewayError) {
-    console.log('❌ Gateway échoué, tentative directe...');
+    console.log('Gateway failed, trying direct...', gatewayError.message);
     try {
       return await directRequest();
     } catch (directError) {
-      console.error('❌ Les deux méthodes ont échoué');
-      throw gatewayError; // Retourne l'erreur originale
+      throw directError;
     }
   }
 };
@@ -116,27 +115,27 @@ export const airQualityAPI = {
 // ==================== EMERGENCY SERVICE ====================
 export const emergencyAPI = {
   createAlert: (alertData) => tryRequest(
-    () => axios.post('http://localhost:8080/api/emergency/emergencies', alertData, API_CONFIG),
+    () => axios.post('http://localhost:8080/api/emergency', alertData, API_CONFIG),
     () => axios.post('http://localhost:8083/api/emergencies', alertData, API_CONFIG)
   ),
   
   getAlerts: () => tryRequest(
-    () => axios.get('http://localhost:8080/api/emergency/emergencies', API_CONFIG),
+    () => axios.get('http://localhost:8080/api/emergency', API_CONFIG),
     () => axios.get('http://localhost:8083/api/emergencies', API_CONFIG)
   ),
   
   getAlert: (emergencyId) => tryRequest(
-    () => axios.get(`http://localhost:8080/api/emergency/emergencies/${emergencyId}`, API_CONFIG),
+    () => axios.get(`http://localhost:8080/api/emergency/${emergencyId}`, API_CONFIG),
     () => axios.get(`http://localhost:8083/api/emergencies/${emergencyId}`, API_CONFIG)
   ),
   
   updateStatus: (emergencyId, statusData) => tryRequest(
-    () => axios.put(`http://localhost:8080/api/emergency/emergencies/${emergencyId}/status`, statusData, API_CONFIG),
+    () => axios.put(`http://localhost:8080/api/emergency/${emergencyId}/status`, statusData, API_CONFIG),
     () => axios.put(`http://localhost:8083/api/emergencies/${emergencyId}/status`, statusData, API_CONFIG)
   ),
   
   getStats: (hoursBack = 24) => tryRequest(
-    () => axios.get(`http://localhost:8080/api/emergency/emergencies/stats?hoursBack=${hoursBack}`, API_CONFIG),
+    () => axios.get(`http://localhost:8080/api/emergency/stats?hoursBack=${hoursBack}`, API_CONFIG),
     () => axios.get(`http://localhost:8083/api/emergencies/stats?hoursBack=${hoursBack}`, API_CONFIG)
   ),
 };
@@ -299,49 +298,148 @@ export const orchestrationAPI = {
 };
 
 // ==================== HEALTH CHECKS ====================
-const healthCheck = async (url) => {
-  try {
-    const response = await axios.get(url, { 
-      timeout: 5000,
-      validateStatus: () => true
-    });
-    return { data: { status: response.status === 200 ? 'UP' : 'DOWN' } };
-  } catch (error) {
-    return { data: { status: 'DOWN' } };
-  }
-};
+// Dans client-web/src/services/api.js
 
 export const healthAPI = {
-  gateway: () => healthCheck('http://localhost:8080/actuator/health'),
-  
-  mobility: async () => {
-    const gatewayResult = await healthCheck('http://localhost:8080/api/mobility/actuator/health');
-    if (gatewayResult.data.status === 'UP') return gatewayResult;
-    return await healthCheck('http://localhost:8081/mobility/actuator/health');
+  gateway: async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/actuator/health', { timeout: 5000 });
+      return { data: { status: response.data?.status === 'UP' ? 'UP' : 'DOWN' } };
+    } catch (error) {
+      return { data: { status: 'DOWN' } };
+    }
   },
   
+  mobility: async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/api/mobility/transport-lines', { timeout: 5000 });
+      if (response.status === 200) {
+        return { data: { status: 'UP' } };
+      }
+    } catch (e) {}
+    
+    try {
+      const response = await axios.get('http://localhost:8081/mobility/api/transport-lines', { timeout: 5000 });
+      if (response.status === 200) {
+        return { data: { status: 'UP' } };
+      }
+    } catch (e) {}
+    
+    return { data: { status: 'DOWN' } };
+  },
+  
+  // CORRIGÉ - Air Quality utilise WSDL pour vérifier
   airQuality: async () => {
-    const gatewayResult = await healthCheck('http://localhost:8080/api/air-quality/actuator/health');
-    if (gatewayResult.data.status === 'UP') return gatewayResult;
-    return await healthCheck('http://localhost:8082/airquality/actuator/health');
+    try {
+      // Vérifier si le WSDL est accessible via Gateway
+      const response = await axios.get('http://localhost:8080/api/air-quality/ws/airquality.wsdl', { 
+        timeout: 5000,
+        responseType: 'text'
+      });
+      if (response.status === 200 && response.data.includes('wsdl')) {
+        return { data: { status: 'UP' } };
+      }
+    } catch (e) {
+      console.log('Gateway air quality check failed:', e.message);
+    }
+    
+    try {
+      // Vérifier directement
+      const response = await axios.get('http://localhost:8082/airquality/ws/airquality.wsdl', { 
+        timeout: 5000,
+        responseType: 'text'
+      });
+      if (response.status === 200 && response.data.includes('wsdl')) {
+        return { data: { status: 'UP' } };
+      }
+    } catch (e) {
+      console.log('Direct air quality check failed:', e.message);
+    }
+    
+    try {
+      // Essayer l'actuator
+      const response = await axios.get('http://localhost:8082/airquality/actuator/health', { timeout: 5000 });
+      if (response.status === 200) {
+        return { data: { status: 'UP' } };
+      }
+    } catch (e) {}
+    
+    return { data: { status: 'DOWN' } };
   },
   
   emergency: async () => {
-    const gatewayResult = await healthCheck('http://localhost:8080/api/emergency/actuator/health');
-    if (gatewayResult.data.status === 'UP') return gatewayResult;
-    return await healthCheck('http://localhost:8083/actuator/health');
+    try {
+      const response = await axios.get('http://localhost:8080/api/emergency/health', { timeout: 5000 });
+      if (response.data && response.data.status === 'UP') {
+        return { data: { status: 'UP' } };
+      }
+      if (response.status === 200) {
+        return { data: { status: 'UP' } };
+      }
+    } catch (e) {}
+    
+    try {
+      const response = await axios.get('http://localhost:8083/api/emergencies/health', { timeout: 5000 });
+      if (response.data && response.data.status === 'UP') {
+        return { data: { status: 'UP' } };
+      }
+    } catch (e) {}
+    
+    try {
+      const response = await axios.get('http://localhost:8083/api/emergencies', { timeout: 5000 });
+      if (response.status === 200) {
+        return { data: { status: 'UP' } };
+      }
+    } catch (e) {}
+    
+    return { data: { status: 'DOWN' } };
   },
   
+  // CORRIGÉ - Events utilise GraphQL query
   events: async () => {
-    const gatewayResult = await healthCheck('http://localhost:8080/api/events/actuator/health');
-    if (gatewayResult.data.status === 'UP') return gatewayResult;
-    return await healthCheck('http://localhost:8084/actuator/health');
+    try {
+      // Essayer une requête GraphQL simple
+      const query = '{"query": "{ getAllEvents { id } }"}';
+      const response = await axios.post('http://localhost:8084/graphql', 
+        JSON.parse(query),
+        { 
+          timeout: 5000,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+      if (response.status === 200 && response.data) {
+        return { data: { status: 'UP' } };
+      }
+    } catch (e) {
+      console.log('GraphQL check failed:', e.message);
+    }
+    
+    try {
+      const response = await axios.get('http://localhost:8084/actuator/health', { timeout: 5000 });
+      if (response.status === 200) {
+        return { data: { status: 'UP' } };
+      }
+    } catch (e) {}
+    
+    return { data: { status: 'DOWN' } };
   },
   
   orchestration: async () => {
-    const gatewayResult = await healthCheck('http://localhost:8080/api/orchestration/health');
-    if (gatewayResult.data.status === 'UP') return gatewayResult;
-    return await healthCheck('http://localhost:8085/orchestration/health');
+    try {
+      const response = await axios.get('http://localhost:8080/api/orchestration/health', { timeout: 5000 });
+      if (response.data && response.data.status === 'UP') {
+        return { data: { status: 'UP' } };
+      }
+    } catch (e) {}
+    
+    try {
+      const response = await axios.get('http://localhost:8085/orchestration/health', { timeout: 5000 });
+      if (response.data && response.data.status === 'UP') {
+        return { data: { status: 'UP' } };
+      }
+    } catch (e) {}
+    
+    return { data: { status: 'DOWN' } };
   },
 };
 

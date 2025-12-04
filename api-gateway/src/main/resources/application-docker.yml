@@ -13,6 +13,7 @@ spring:
           '[/**]':
             allowedOrigins: 
               - "http://localhost:3000"
+              - "http://client-web:3000"
             allowedMethods: "*"
             allowedHeaders: "*"
             allowCredentials: true
@@ -20,14 +21,14 @@ spring:
       routes:
         # ============ MOBILITY SERVICE ============
         - id: mobility-service
-          uri: http://localhost:8081
+          uri: http://mobility-service:8081
           predicates:
             - Path=/api/mobility/**
           filters:
             - RewritePath=/api/mobility/(?<segment>.*), /mobility/api/${segment}
 
         - id: mobility-actuator
-          uri: http://localhost:8081
+          uri: http://mobility-service:8081
           predicates:
             - Path=/api/mobility/actuator/**
           filters:
@@ -35,14 +36,14 @@ spring:
 
         # ============ AIR QUALITY SERVICE ============
         - id: air-quality-service
-          uri: http://localhost:8082
+          uri: http://air-quality-service:8082
           predicates:
             - Path=/api/air-quality/**
           filters:
             - RewritePath=/api/air-quality/(?<segment>.*), /airquality/${segment}
 
         - id: air-quality-actuator
-          uri: http://localhost:8082
+          uri: http://air-quality-service:8082
           predicates:
             - Path=/api/air-quality/actuator/**
           filters:
@@ -51,7 +52,7 @@ spring:
         # ============ EMERGENCY SERVICE ============
         # Route pour /api/emergency (sans rien après)
         - id: emergency-service-root
-          uri: http://localhost:8083
+          uri: http://emergency-service:8083
           predicates:
             - Path=/api/emergency
             - Method=GET,POST,PUT,DELETE,OPTIONS
@@ -60,7 +61,7 @@ spring:
 
         # Route pour /api/emergency/* (avec quelque chose après)
         - id: emergency-service-path
-          uri: http://localhost:8083
+          uri: http://emergency-service:8083
           predicates:
             - Path=/api/emergency/{segment}
           filters:
@@ -68,7 +69,7 @@ spring:
 
         # Route pour /api/emergency/** (chemins plus profonds)
         - id: emergency-service-deep
-          uri: http://localhost:8083
+          uri: http://emergency-service:8083
           predicates:
             - Path=/api/emergency/**
           filters:
@@ -76,29 +77,42 @@ spring:
 
         # Emergency Actuator
         - id: emergency-actuator
-          uri: http://localhost:8083
+          uri: http://emergency-service:8083
           predicates:
             - Path=/api/emergency/actuator/**
           filters:
             - RewritePath=/api/emergency/actuator/(?<segment>.*), /actuator/${segment}
 
         # ============ EVENTS SERVICE (GraphQL) ============
+        # GraphQL endpoint - POST only
         - id: urban-events-graphql
-          uri: http://localhost:8084
+          uri: http://urban-events-service:8084
           predicates:
             - Path=/api/events/graphql
+            - Method=POST,OPTIONS
           filters:
             - SetPath=/graphql
 
+        # GraphiQL interface - GET
         - id: urban-events-graphiql
-          uri: http://localhost:8084
+          uri: http://urban-events-service:8084
+          predicates:
+            - Path=/api/events/graphiql
+            - Method=GET
+          filters:
+            - SetPath=/graphiql
+
+        # GraphiQL resources
+        - id: urban-events-graphiql-resources
+          uri: http://urban-events-service:8084
           predicates:
             - Path=/api/events/graphiql/**
           filters:
-            - RewritePath=/api/events/graphiql(?<segment>.*), /graphiql${segment}
+            - RewritePath=/api/events/graphiql/(?<segment>.*), /graphiql/${segment}
 
+        # Events Actuator
         - id: events-actuator
-          uri: http://localhost:8084
+          uri: http://urban-events-service:8084
           predicates:
             - Path=/api/events/actuator/**
           filters:
@@ -106,7 +120,7 @@ spring:
 
         # ============ ORCHESTRATION SERVICE ============
         - id: orchestration-service
-          uri: http://localhost:8085
+          uri: http://orchestration-service:8085
           predicates:
             - Path=/api/orchestration/**
           filters:

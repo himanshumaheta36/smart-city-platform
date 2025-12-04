@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # API Gateway - Point d'entrée unique
   api-gateway:
@@ -14,10 +16,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 120s  # Increased for Spring Boot startup
+      start_period: 120s
     networks:
       - smart-city-network
     restart: unless-stopped
+    depends_on:
+      - mobility-service
+      - air-quality-service
+      - emergency-service
+      - urban-events-service
+      - orchestration-service
 
   # Service Mobilité (REST)
   mobility-service:
@@ -30,7 +38,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/mobility/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -50,7 +58,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8082/airquality/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -111,7 +119,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8085/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8085/orchestration/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -142,6 +150,8 @@ services:
     networks:
       - smart-city-network
     restart: unless-stopped
+    depends_on:
+      - api-gateway
 
 networks:
   smart-city-network:

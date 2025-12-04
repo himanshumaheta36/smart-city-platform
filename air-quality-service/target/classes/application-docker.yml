@@ -1,14 +1,13 @@
 server:
-  port: 8083
-  # Forcer HTTP/1.1 pour le serveur web
-  http2:
-    enabled: false
+  port: 8082
+  servlet:
+    context-path: /airquality
 
 spring:
   application:
-    name: emergency-service
+    name: air-quality-service
   datasource:
-    url: jdbc:h2:mem:emergencydb
+    url: jdbc:h2:mem:airqualitydb
     driverClassName: org.h2.Driver
     username: sa
     password: password
@@ -28,11 +27,6 @@ spring:
     init:
       mode: always
 
-# gRPC sur un port séparé
-grpc:
-  server:
-    port: 9090
-
 management:
   endpoints:
     web:
@@ -42,7 +36,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-logging:
-  level:
-    com.smartcity.emergency: DEBUG

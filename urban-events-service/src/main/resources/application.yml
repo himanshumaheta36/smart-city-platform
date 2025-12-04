@@ -29,6 +29,10 @@ spring:
       enabled: true
       path: /graphiql
     path: /graphql
+    cors:
+      allowed-origins: "*"
+      allowed-methods: "*"
+      allowed-headers: "*"
     schema:
       printer:
         enabled: true
@@ -45,5 +49,5 @@ management:
 
 logging:
   level:
-    com.smartcity.urbanevents: INFO
+    com.smartcity.urbanevents: DEBUG
     org.springframework.graphql: DEBUG

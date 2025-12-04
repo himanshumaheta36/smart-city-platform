@@ -87,7 +87,7 @@ curl http://localhost:8085/orchestration/health
 - **Orchestration**: http://localhost:8085
 
 ### Documentation & Outils
-- **GraphiQL** (Events): http://localhost:8084/graphiql
+- **GraphiQL** (Events): http://localhost:8084/graphiql (POST)
 - **WSDL** (Air Quality): http://localhost:8082/airquality/ws/airquality.wsdl
 - **H2 Console** (Mobility): http://localhost:8081/mobility/h2-console
 - **Swagger UI** (Mobility): http://localhost:8081/mobility/swagger-ui.html
@@ -105,7 +105,7 @@ Accédez à http://localhost:3000 et naviguez entre les différents services.
 curl http://localhost:8080/api/mobility/api/transport-lines
 
 # Horaires d'une ligne
-curl http://localhost:8080/api/mobility/api/schedules/line/BUS-101
+curl http://localhost:8080/api/mobility/schedules/line/BUS-101
 ```
 
 **2. Qualité d'Air (SOAP via REST)**
