@@ -27,7 +27,7 @@ public class GeminiService {
     public GeminiService(
             WebClient.Builder webClientBuilder,
             @Value("${gemini.api-key:}") String apiKey,
-            @Value("${gemini.model:gemini-2.0-flash}") String model,
+            @Value("${gemini.model:gemini-2.5-flash-lite}") String model,
             @Value("${gemini.url:https://generativelanguage.googleapis.com/v1beta}") String baseUrl,
             @Value("${gemini.enabled:true}") boolean enabled) {
         

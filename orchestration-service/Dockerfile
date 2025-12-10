@@ -10,7 +10,7 @@ COPY --from=builder /app/target/orchestration-service-1.0.0.jar app.jar
 
 # Configuration Gemini
 ENV GEMINI_API_KEY=""
-ENV GEMINI_MODEL="gemini-2.0-flash"
+ENV GEMINI_MODEL="gemini-2.5-flash-lite"
 ENV GEMINI_ENABLED="true"
 
 EXPOSE 8085
