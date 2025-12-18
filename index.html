@@ -1,0 +1,3216 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Village - Architecture Technique</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Poppins:wght@300;400;600;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a1a;
+            --bg-card: rgba(20, 25, 45, 0.85);
+            --primary: #00d4ff;
+            --secondary: #7c3aed;
+            --accent: #00ff88;
+            --warning: #ff6b35;
+            --text-main: #ffffff;
+            --text-muted: #a0aec0;
+            --code-bg: #1a1a2e;
+            --gradient-main: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0f0f2f 100%);
+            --gradient-accent: linear-gradient(135deg, #00d4ff 0%, #7c3aed 50%, #00ff88 100%);
+            --glass: rgba(255, 255, 255, 0.08);
+            --glow-primary: 0 0 40px rgba(0, 212, 255, 0.4);
+            --glow-accent: 0 0 40px rgba(0, 255, 136, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--gradient-main);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        /* Floating Particles */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: floatParticle 15s infinite ease-in-out;
+            opacity: 0.6;
+        }
+
+        @keyframes floatParticle {
+            0%, 100% { transform: translateY(100vh) translateX(0) scale(0); opacity: 0; }
+            10% { opacity: 0.6; }
+            50% { transform: translateY(50vh) translateX(100px) scale(1); }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-10vh) translateX(-50px) scale(0); opacity: 0; }
+        }
+
+        /* Animated Grid */
+        .grid-bg {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(60px); }
+        }
+
+        /* Glowing Orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.3;
+            animation: orbFloat 25s infinite ease-in-out;
+        }
+
+        .orb-1 {
+            top: 10%;
+            left: 10%;
+            width: 400px;
+            height: 400px;
+            background: var(--primary);
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            bottom: 10%;
+            right: 10%;
+            width: 500px;
+            height: 500px;
+            background: var(--secondary);
+            animation-delay: -8s;
+        }
+
+        .orb-3 {
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 300px;
+            background: var(--accent);
+            animation-delay: -15s;
+        }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(50px, -50px) scale(1.1); }
+            50% { transform: translate(-30px, 30px) scale(0.9); }
+            75% { transform: translate(40px, 40px) scale(1.05); }
+        }
+
+        /* Slides Container */
+        .slides-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 2rem 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform: scale(0.8) rotateY(-10deg);
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1) rotateY(0);
+            z-index: 10;
+        }
+
+        .slide.prev {
+            transform: translateX(-120%) scale(0.7) rotateY(20deg);
+            opacity: 0;
+        }
+
+        .slide.next {
+            transform: translateX(120%) scale(0.7) rotateY(-20deg);
+            opacity: 0;
+        }
+
+        /* Content Layout */
+        .slide-content {
+            width: 100%;
+            max-width: 1300px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .slide-content.full-width {
+            grid-template-columns: 1fr;
+            text-align: center;
+        }
+
+        .slide-content.triple {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: var(--gradient-accent);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            line-height: 1.1;
+            animation: textGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes textGlow {
+            from { filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.5)); }
+            to { filter: drop-shadow(0 0 40px rgba(124, 58, 237, 0.5)); }
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        p {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .card:hover::before {
+            left: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: var(--primary);
+            box-shadow: var(--glow-primary);
+        }
+
+        /* Protocol Cards */
+        .protocol-card {
+            position: relative;
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: var(--bg-card);
+            border: 2px solid transparent;
+            transition: all 0.4s;
+        }
+
+        .protocol-card.rest { border-color: #ef4444; }
+        .protocol-card.soap { border-color: #22c55e; }
+        .protocol-card.grpc { border-color: #3b82f6; }
+        .protocol-card.graphql { border-color: #e879f9; }
+
+        .protocol-card:hover {
+            transform: translateY(-5px) rotateX(5deg);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        /* Icon Styles */
+        .icon-large {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
+            background: var(--glass);
+            border: 2px solid var(--primary);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4); }
+            50% { box-shadow: 0 0 0 15px rgba(0, 212, 255, 0); }
+        }
+
+        /* Tech Badges */
+        .tech-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--primary);
+            border-radius: 50px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            margin: 0.2rem;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            transition: all 0.3s;
+        }
+
+        .tech-badge:hover {
+            background: var(--primary);
+            color: var(--bg-dark);
+            transform: scale(1.1);
+        }
+
+        .tech-badge.green { background: rgba(0, 255, 136, 0.1); color: var(--accent); border-color: var(--accent); }
+        .tech-badge.purple { background: rgba(124, 58, 237, 0.1); color: var(--secondary); border-color: var(--secondary); }
+        .tech-badge.orange { background: rgba(255, 107, 53, 0.1); color: var(--warning); border-color: var(--warning); }
+
+        /* Code Blocks */
+        .code-block {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--code-bg);
+            padding: 1.2rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent);
+            font-size: 0.75rem;
+            box-shadow: inset 0 2px 15px rgba(0, 0, 0, 0.5);
+            white-space: pre-wrap;
+            text-align: left;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: attr(data-lang);
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            background: var(--primary);
+            color: var(--bg-dark);
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: bold;
+        }
+
+        .code-keyword { color: #c792ea; }
+        .code-string { color: #c3e88d; }
+        .code-comment { color: #546e7a; }
+        .code-function { color: #82aaff; }
+
+        /* Diagram Container */
+        .diagram-container {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.2);
+            background: var(--bg-card);
+            border: 1px solid var(--glass);
+        }
+
+        .diagram-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.5s;
+        }
+
+        .diagram-container:hover img {
+            transform: scale(1.03);
+        }
+
+        /* Lists */
+        ul {
+            list-style: none;
+        }
+
+        li {
+            margin-bottom: 0.8rem;
+            padding-left: 1.8rem;
+            position: relative;
+            font-size: 1rem;
+        }
+
+        li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Grids */
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+        /* Animated Shapes */
+        .floating-shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: shapeFloat 10s infinite ease-in-out;
+        }
+
+        @keyframes shapeFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        /* Architecture Diagram */
+        .arch-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 16px;
+        }
+
+        .arch-layer {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .arch-node {
+            background: var(--bg-card);
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            padding: 0.8rem 1.2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+            min-width: 100px;
+        }
+
+        .arch-node:hover {
+            transform: scale(1.1);
+            box-shadow: var(--glow-primary);
+        }
+
+        .arch-node.gateway { border-color: var(--warning); }
+        .arch-node.service { border-color: var(--accent); }
+        .arch-node.ai { border-color: var(--secondary); background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(0,212,255,0.2)); }
+
+        /* Flow Animation */
+        .flow-arrow {
+            width: 2px;
+            height: 30px;
+            background: linear-gradient(to bottom, var(--primary), transparent);
+            margin: 0 auto;
+            position: relative;
+            animation: flowPulse 1.5s infinite;
+        }
+
+        @keyframes flowPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Stats Counter */
+        .stat-box {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--gradient-accent);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: block;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding: 1rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary), var(--accent));
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-item:nth-child(odd) { flex-direction: row-reverse; }
+
+        .timeline-content {
+            width: 45%;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 10px;
+            border: 1px solid var(--glass);
+        }
+
+        .timeline-dot {
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin: 0 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 0.8rem;
+        }
+
+        .comparison-table th {
+            text-align: left;
+            padding: 1rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            font-size: 0.9rem;
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+            background: var(--bg-card);
+            font-size: 0.9rem;
+        }
+
+        .comparison-table td:first-child {
+            border-radius: 10px 0 0 10px;
+            font-weight: 600;
+        }
+
+        .comparison-table td:last-child {
+            border-radius: 0 10px 10px 0;
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        /* Performance Bar */
+        .perf-bar {
+            height: 8px;
+            background: var(--glass);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .perf-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease-out;
+        }
+
+        /* Navigation */
+        .nav-controls {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .nav-btn:hover {
+            background: var(--primary);
+            color: var(--bg-dark);
+            box-shadow: var(--glow-primary);
+            transform: scale(1.05);
+        }
+
+        /* Progress */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--gradient-accent);
+            width: 0%;
+            transition: width 0.4s ease-out;
+        }
+
+        .progress-indicator {
+            position: fixed;
+            top: 1rem;
+            right: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            z-index: 1000;
+            background: var(--bg-card);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            border: 1px solid var(--glass);
+        }
+
+        /* Title Slide Special */
+        .title-slide h1 {
+            font-size: 4.5rem;
+            text-shadow: 0 0 60px rgba(0, 212, 255, 0.5);
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .author-info {
+            margin-top: 2rem;
+            padding: 1.5rem 2rem;
+            background: var(--bg-card);
+            border-radius: 100px;
+            display: inline-block;
+        }
+
+        /* SVG Illustrations */
+        .svg-icon {
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        /* Animated Connection Lines */
+        .connection-line {
+            stroke: var(--primary);
+            stroke-width: 2;
+            fill: none;
+            stroke-dasharray: 5, 5;
+            animation: dashMove 1s linear infinite;
+        }
+
+        @keyframes dashMove {
+            to { stroke-dashoffset: -10; }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1200px) {
+            h1 { font-size: 2.5rem; }
+            h2 { font-size: 1.8rem; }
+            .slide { padding: 1.5rem 2rem; }
+            .slide-content { gap: 2rem; }
+            .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Microservice Visual */
+        .microservice-cluster {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.8rem;
+            padding: 1rem;
+        }
+
+        .ms-node {
+            width: 70px;
+            height: 70px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--primary);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .ms-node:hover {
+            transform: scale(1.15) rotate(5deg);
+            box-shadow: var(--glow-primary);
+        }
+
+        /* Docker Container Visual */
+        .docker-container {
+            background: linear-gradient(135deg, #0db7ed 0%, #066da5 100%);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s;
+        }
+
+        .docker-container:hover {
+            transform: translateX(10px);
+            box-shadow: 0 0 30px rgba(13, 183, 237, 0.4);
+        }
+
+        /* Animated Hexagon Grid */
+        .hex-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .hex {
+            width: 60px;
+            height: 52px;
+            background: var(--bg-card);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .hex:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+
+        
+    </style>
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="grid-bg"></div>
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="particles" id="particles"></div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="progress-indicator">
+        <span id="currentSlide">1</span> / <span id="totalSlides">30</span>
+    </div>
+
+    <div class="slides-container" id="slidesContainer">
+
+        <!-- Slide 1: Welcome -->
+        <div class="slide active title-slide">
+            <div class="slide-content full-width">
+                <div style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;">
+                    <span class="tech-badge">Spring Boot</span>
+                    <span class="tech-badge green">Node.js</span>
+                    <span class="tech-badge purple">React</span>
+                    <span class="tech-badge">Docker</span>
+                    <span class="tech-badge orange">Gemini AI</span>
+                </div>
+                
+                <h1>
+                    <span style="font-size: 4rem;">🏘️</span>
+                    <br>
+                    <span id="typewriterText"></span>
+                    <span id="cursor" style="animation: blink 1s infinite;">|</span>
+                </h1>
+                <p class="subtitle">Architecture Microservices & Intelligence Artificielle</p>
+                
+                <div class="author-info">
+                    <span style="color: var(--text-muted);">Présenté par</span>
+                    <span style="font-weight: 800; margin-left: 0.5rem; color: var(--primary);">Rana ROMDHANE</span>
+                </div>
+
+                <div style="margin-top: 3rem; display: flex; justify-content: center; gap: 3rem;">
+                    <div class="stat-box">
+                        <span class="stat-number">5</span>
+                        <span class="stat-label">Microservices</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-number">4</span>
+                        <span class="stat-label">Protocoles</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-number">∞</span>
+                        <span class="stat-label">Possibilités</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Problem Statement -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3>🎯 Le Défi</h3>
+                    <h2>Pourquoi Smart Village ?</h2>
+                    <p>Les villes modernes font face à des défis complexes nécessitant une approche technologique intégrée.</p>
+                    
+                    <div class="card" style="margin-top: 1.5rem; border-left: 4px solid #ef4444;">
+                        <h4 style="color: #ef4444;">❌ Problèmes Actuels</h4>
+                        <ul style="margin-top: 1rem;">
+                            <li>Systèmes isolés et non-communicants</li>
+                            <li>Données fragmentées et inaccessibles</li>
+                            <li>Temps de réponse lent aux urgences</li>
+                            <li>Expérience citoyen fragmentée</li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <div class="card" style="border-left: 4px solid var(--accent); background: rgba(0, 255, 136, 0.05);">
+                        <h4 style="color: var(--accent);">✅ Notre Solution</h4>
+                        <ul style="margin-top: 1rem;">
+                            <li>Architecture unifiée microservices</li>
+                            <li>Protocoles adaptés à chaque besoin</li>
+                            <li>IA pour l'orchestration intelligente</li>
+                            <li>Interface citoyen unique</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Visual Representation -->
+                    <div style="margin-top: 2rem; text-align: center;">
+                        <svg width="200" height="150" viewBox="0 0 200 150">
+                            <!-- Fragmented to Unified -->
+                            <g>
+                                <!-- Scattered dots (before) -->
+                                <circle cx="30" cy="40" r="8" fill="#ef4444" opacity="0.5">
+                                    <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
+                                </circle>
+                                <circle cx="50" cy="70" r="6" fill="#22c55e" opacity="0.5">
+                                    <animate attributeName="opacity" values="0.5;1;0.5" dur="2.5s" repeatCount="indefinite"/>
+                                </circle>
+                                <circle cx="25" cy="100" r="7" fill="#3b82f6" opacity="0.5">
+                                    <animate attributeName="opacity" values="0.5;1;0.5" dur="1.8s" repeatCount="indefinite"/>
+                                </circle>
+                                
+                                <!-- Arrow -->
+                                <path d="M80 75 L120 75" stroke="var(--primary)" stroke-width="3" fill="none">
+                                    <animate attributeName="stroke-dasharray" values="0,100;40,100" dur="1s" repeatCount="indefinite"/>
+                                </path>
+                                <polygon points="120,75 110,70 110,80" fill="var(--primary)"/>
+                                
+                                <!-- Unified circle (after) -->
+                                <circle cx="160" cy="75" r="35" fill="none" stroke="var(--accent)" stroke-width="2">
+                                    <animate attributeName="r" values="35;38;35" dur="2s" repeatCount="indefinite"/>
+                                </circle>
+                                <circle cx="160" cy="75" r="8" fill="var(--accent)"/>
+                                <circle cx="145" cy="60" r="5" fill="var(--primary)"/>
+                                <circle cx="175" cy="60" r="5" fill="var(--secondary)"/>
+                                <circle cx="145" cy="90" r="5" fill="#ef4444"/>
+                                <circle cx="175" cy="90" r="5" fill="#22c55e"/>
+                            </g>
+                        </svg>
+                        <p style="font-size: 0.9rem; color: var(--text-muted);">De la fragmentation à l'unification</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Vision Overview -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3>🌟 La Vision</h3>
+                    <h2>Smart Village en Action</h2>
+                    <p class="highlight">Une plateforme urbaine intelligente, modulaire et évolutive.</p>
+                    <p>Notre objectif : transformer la gestion urbaine grâce à une architecture distribuée capable d'intégrer des services hétérogènes.</p>
+                    
+                    <ul style="margin-top: 1.5rem;">
+                        <li><strong>Interopérabilité</strong> - Protocoles anciens et modernes</li>
+                        <li><strong>Intelligence</strong> - IA au cœur de l'orchestration</li>
+                        <li><strong>Expérience</strong> - Interface unifiée et personnalisée</li>
+                        <li><strong>Scalabilité</strong> - Conteneurisation Docker</li>
+                    </ul>
+                </div>
+                <div class="diagram-container" style="padding: 1rem;">
+                    <img src="docs/screenshots/dashboard.png" alt="Dashboard" style="border-radius: 12px;" 
+                         onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'padding: 3rem; text-align: center;\'>📊<br><br>Dashboard Preview<br><small>Interface Citoyen Unifiée</small></div>';">
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Architecture Overview -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem;">🏗️ Architecture Globale</h2>
+                <p style="font-size: 0.9rem; margin-bottom: 1rem;">Vue d'ensemble de notre écosystème microservices</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center;">
+                    <!-- Left: Architecture Diagram -->
+                    <div class="arch-diagram" style="padding: 1rem; max-width: 100%;">
+                        <!-- Frontend Layer -->
+                        <div class="arch-layer" style="background: rgba(0, 212, 255, 0.1); padding: 0.5rem;">
+                            <div class="arch-node" style="border-color: var(--primary); font-size: 0.75rem; padding: 0.6rem;">
+                                ⚛️ React Frontend
+                            </div>
+                        </div>
+                        
+                        <div class="flow-arrow" style="height: 15px;"></div>
+                        
+                        <!-- Gateway Layer -->
+                        <div class="arch-layer" style="background: rgba(255, 107, 53, 0.1); padding: 0.5rem;">
+                            <div class="arch-node gateway" style="font-size: 0.75rem; padding: 0.6rem;">
+                                🚪 API Gateway
+                            </div>
+                        </div>
+                        
+                        <div class="flow-arrow" style="height: 15px;"></div>
+                        
+                        <!-- Services Layer -->
+                        <div class="arch-layer" style="background: rgba(0, 255, 136, 0.1); flex-wrap: wrap; padding: 0.5rem; gap: 0.5rem;">
+                            <div class="arch-node service" style="font-size: 0.65rem; padding: 0.4rem 0.6rem; min-width: 70px;">
+                                🚌<br><small style="font-size: 0.6rem;">REST</small>
+                            </div>
+                            <div class="arch-node service" style="font-size: 0.65rem; padding: 0.4rem 0.6rem; min-width: 70px;">
+                                🌫️<br><small style="font-size: 0.6rem;">SOAP</small>
+                            </div>
+                            <div class="arch-node service" style="font-size: 0.65rem; padding: 0.4rem 0.6rem; min-width: 70px;">
+                                🚨<br><small style="font-size: 0.6rem;">gRPC</small>
+                            </div>
+                            <div class="arch-node service" style="font-size: 0.65rem; padding: 0.4rem 0.6rem; min-width: 70px;">
+                                🎭<br><small style="font-size: 0.6rem;">GraphQL</small>
+                            </div>
+                            <div class="arch-node ai" style="font-size: 0.65rem; padding: 0.4rem 0.6rem; min-width: 70px;">
+                                🧠<br><small style="font-size: 0.6rem;">AI</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Info Cards -->
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div class="card" style="text-align: center; padding: 1rem;">
+                            <span style="font-size: 2rem;">💻</span>
+                            <h3 style="font-size: 1rem; margin: 0.5rem 0;">Frontend</h3>
+                            <p style="font-size: 0.75rem; margin: 0; color: var(--text-muted);">React SPA + Interactions IA</p>
+                        </div>
+                        <div class="card" style="text-align: center; padding: 1rem;">
+                            <span style="font-size: 2rem;">🛡️</span>
+                            <h3 style="font-size: 1rem; margin: 0.5rem 0;">Gateway</h3>
+                            <p style="font-size: 0.75rem; margin: 0; color: var(--text-muted);">Routage & Sécurité</p>
+                        </div>
+                        <div class="card" style="text-align: center; padding: 1rem;">
+                            <span style="font-size: 2rem;">⚙️</span>
+                            <h3 style="font-size: 1rem; margin: 0.5rem 0;">Backend</h3>
+                            <p style="font-size: 0.75rem; margin: 0; color: var(--text-muted);">Services Polyglottes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Why Microservices? -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3>🧩 L'Architecture</h3>
+                    <h2>Pourquoi Microservices ?</h2>
+                    <p>Passer d'un monolithe à des services distribués pour gagner en agilité.</p>
+                    
+                    <div class="grid-2" style="margin-top: 1.5rem;">
+                        <div class="card">
+                            <h4 style="color: var(--primary);">🔓 Indépendance</h4>
+                            <p style="font-size: 0.85rem;">Chaque équipe choisit sa techno et son rythme</p>
+                        </div>
+                        <div class="card">
+                            <h4 style="color: var(--accent);">📈 Scalabilité</h4>
+                            <p style="font-size: 0.85rem;">Scale uniquement ce qui est nécessaire</p>
+                        </div>
+                        <div class="card">
+                            <h4 style="color: var(--secondary);">🛡️ Résilience</h4>
+                            <p style="font-size: 0.85rem;">Une panne isolée ne stoppe pas tout</p>
+                        </div>
+                        <div class="card">
+                            <h4 style="color: var(--warning);">🌐 Polyglottisme</h4>
+                            <p style="font-size: 0.85rem;">Le bon outil pour le bon travail</p>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <!-- Microservices Visualization -->
+                    <div style="position: relative; width: 280px; height: 280px; margin: 0 auto;">
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80px; height: 80px; background: var(--gradient-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: var(--glow-primary); z-index: 2;">
+                            µ
+                        </div>
+                        <!-- Orbiting services -->
+                        <div class="ms-node" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); animation: orbit1 8s linear infinite;">🚌</div>
+                        <div class="ms-node" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); border-color: var(--accent); animation: orbit2 8s linear infinite;">🌫️</div>
+                        <div class="ms-node" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); border-color: var(--secondary); animation: orbit3 8s linear infinite;">🚨</div>
+                        <div class="ms-node" style="position: absolute; top: 50%; left: 10px; transform: translateY(-50%); border-color: var(--warning); animation: orbit4 8s linear infinite;">🎭</div>
+                    </div>
+                    <style>
+                        @keyframes orbit1 { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(10px); } }
+                        @keyframes orbit2 { 0%, 100% { transform: translateY(-50%) translateX(0); } 50% { transform: translateY(-50%) translateX(-10px); } }
+                        @keyframes orbit3 { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-10px); } }
+                        @keyframes orbit4 { 0%, 100% { transform: translateY(-50%) translateX(0); } 50% { transform: translateY(-50%) translateX(10px); } }
+                    </style>
+                    <p style="margin-top: 1.5rem; font-weight: 600;">Architecture Microservices</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Protocol Overview -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>🌐 La Tour de Babel des Protocoles</h2>
+                <p>Un défi majeur : faire parler ensemble des technologies différentes</p>
+                
+                <div class="grid-4" style="margin-top: 2rem;">
+                    <div class="protocol-card rest">
+                        <span class="icon-large">🚌</span>
+                        <h3 style="color: #ef4444;">REST</h3>
+                        <p style="font-size: 0.85rem;">Mobilité</p>
+                        <div style="margin-top: 1rem;">
+                            <span class="tech-badge" style="border-color: #ef4444; color: #ef4444;">HTTP/1.1</span>
+                            <span class="tech-badge" style="border-color: #ef4444; color: #ef4444;">JSON</span>
+                        </div>
+                    </div>
+                    
+                    <div class="protocol-card soap">
+                        <span class="icon-large">🌫️</span>
+                        <h3 style="color: #22c55e;">SOAP</h3>
+                        <p style="font-size: 0.85rem;">Qualité d'Air</p>
+                        <div style="margin-top: 1rem;">
+                            <span class="tech-badge green">XML</span>
+                            <span class="tech-badge green">WSDL</span>
+                        </div>
+                    </div>
+                    
+                    <div class="protocol-card grpc">
+                        <span class="icon-large">🚨</span>
+                        <h3 style="color: #3b82f6;">gRPC</h3>
+                        <p style="font-size: 0.85rem;">Urgences</p>
+                        <div style="margin-top: 1rem;">
+                            <span class="tech-badge" style="border-color: #3b82f6; color: #3b82f6;">HTTP/2</span>
+                            <span class="tech-badge" style="border-color: #3b82f6; color: #3b82f6;">Protobuf</span>
+                        </div>
+                    </div>
+                    
+                    <div class="protocol-card graphql">
+                        <span class="icon-large">🎭</span>
+                        <h3 style="color: #e879f9;">GraphQL</h3>
+                        <p style="font-size: 0.85rem;">Événements</p>
+                        <div style="margin-top: 1rem;">
+                            <span class="tech-badge purple">Query</span>
+                            <span class="tech-badge purple">Schema</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: REST Deep Dive -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3 style="color: #ef4444;">🚌 Service Mobilité</h3>
+                    <h2>L'Universalité du REST</h2>
+                    
+                    <div class="card" style="border-left: 4px solid #ef4444; margin-bottom: 1.5rem;">
+                        <h4>Pourquoi REST ici ?</h4>
+                        <p style="font-size: 0.9rem;">Standard du web, idéal pour données publiques consommées par clients variés (Web, Mobile).</p>
+                    </div>
+                    
+                    <div class="grid-2">
+                        <div style="text-align: center; padding: 1rem; background: var(--glass); border-radius: 10px;">
+                            <span style="font-size: 2rem;">📤</span>
+                            <h4>GET</h4>
+                            <small>Lecture</small>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: var(--glass); border-radius: 10px;">
+                            <span style="font-size: 2rem;">📥</span>
+                            <h4>POST</h4>
+                            <small>Création</small>
+                        </div>
+                    </div>
+                    
+                    <ul style="margin-top: 1.5rem; font-size: 0.9rem;">
+                        <li><strong>Stateless:</strong> Chaque requête est autonome</li>
+                        <li><strong>Cacheable:</strong> Performance via ETags</li>
+                        <li><strong>Uniform Interface:</strong> Standards HTTP</li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="code-block" data-lang="Java">
+<span class="code-keyword">@RestController</span>
+<span class="code-keyword">@RequestMapping</span>(<span class="code-string">"/mobility"</span>)
+<span class="code-keyword">public class</span> <span class="code-function">MobilityController</span> {
+
+    <span class="code-keyword">@GetMapping</span>(<span class="code-string">"/trips"</span>)
+    <span class="code-keyword">public</span> List&lt;Trip&gt; <span class="code-function">findTrips</span>(
+        <span class="code-keyword">@RequestParam</span> String from,
+        <span class="code-keyword">@RequestParam</span> String to
+    ) {
+        <span class="code-comment">// Simple, efficace, standard</span>
+        <span class="code-keyword">return</span> mobilityService.search(from, to);
+    }
+}
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; background: var(--bg-card); padding: 1rem; border-radius: 10px;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                            <span style="background: #22c55e; padding: 0.2rem 0.5rem; border-radius: 5px; font-size: 0.7rem;">GET</span>
+                            <code style="font-size: 0.8rem;">/mobility/trips?from=A&to=B</code>
+                        </div>
+                        <pre style="font-size: 0.75rem; color: var(--accent);">{"id": 1, "duration": "15min", "mode": "BUS"}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: REST How it Works -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>🔄 Comment fonctionne REST ?</h2>
+                
+                <div style="display: flex; align-items: center; justify-content: center; gap: 2rem; margin: 2rem 0;">
+                    <!-- Client -->
+                    <div class="card" style="text-align: center; min-width: 150px;">
+                        <span style="font-size: 3rem;">📱</span>
+                        <h4>Client</h4>
+                        <small>React App</small>
+                    </div>
+                    
+                    <!-- Arrow with HTTP -->
+                    <div style="text-align: center;">
+                        <div style="background: linear-gradient(90deg, var(--primary), var(--accent)); height: 3px; width: 100px; position: relative;">
+                            <div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: var(--bg-card); padding: 0.3rem 0.8rem; border-radius: 5px; font-size: 0.7rem;">
+                                HTTP Request
+                            </div>
+                        </div>
+                        <div style="background: linear-gradient(90deg, var(--accent), var(--primary)); height: 3px; width: 100px; margin-top: 20px; position: relative;">
+                            <div style="position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); background: var(--bg-card); padding: 0.3rem 0.8rem; border-radius: 5px; font-size: 0.7rem;">
+                                JSON Response
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Server -->
+                    <div class="card" style="text-align: center; min-width: 150px;">
+                        <span style="font-size: 3rem;">🖥️</span>
+                        <h4>Serveur</h4>
+                        <small>Spring Boot</small>
+                    </div>
+                </div>
+                
+                <div class="grid-3" style="margin-top: 2rem;">
+                    <div class="card" style="text-align: center;">
+                        <span class="tech-badge" style="font-size: 1rem;">1️⃣</span>
+                        <h4 style="margin-top: 0.5rem;">Requête HTTP</h4>
+                        <p style="font-size: 0.8rem;">GET /trips?from=A&to=B</p>
+                    </div>
+                    <div class="card" style="text-align: center;">
+                        <span class="tech-badge" style="font-size: 1rem;">2️⃣</span>
+                        <h4 style="margin-top: 0.5rem;">Traitement</h4>
+                        <p style="font-size: 0.8rem;">Controller → Service → Repository</p>
+                    </div>
+                    <div class="card" style="text-align: center;">
+                        <span class="tech-badge" style="font-size: 1rem;">3️⃣</span>
+                        <h4 style="margin-top: 0.5rem;">Réponse JSON</h4>
+                        <p style="font-size: 0.8rem;">Status 200 + Données</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: SOAP Deep Dive -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3 style="color: #22c55e;">🌫️ Service Qualité d'Air</h3>
+                    <h2>La Rigueur de SOAP</h2>
+                    
+                    <div class="card" style="border-left: 4px solid #22c55e; margin-bottom: 1.5rem;">
+                        <h4>Pourquoi SOAP ici ?</h4>
+                        <p style="font-size: 0.9rem;">Protocole strict pour échanges critiques, données gouvernementales standardisées.</p>
+                    </div>
+                    
+                    <div class="grid-2" style="gap: 1rem;">
+                        <div style="text-align: center; padding: 1rem; background: var(--glass); border-radius: 10px;">
+                            <span style="font-size: 1.5rem;">📄</span>
+                            <h4 style="font-size: 0.9rem;">WSDL</h4>
+                            <small>Contrat</small>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: var(--glass); border-radius: 10px;">
+                            <span style="font-size: 1.5rem;">📦</span>
+                            <h4 style="font-size: 0.9rem;">XML</h4>
+                            <small>Format</small>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: var(--glass); border-radius: 10px;">
+                            <span style="font-size: 1.5rem;">🔒</span>
+                            <h4 style="font-size: 0.9rem;">WS-Security</h4>
+                            <small>Sécurité</small>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: var(--glass); border-radius: 10px;">
+                            <span style="font-size: 1.5rem;">✅</span>
+                            <h4 style="font-size: 0.9rem;">Typage Fort</h4>
+                            <small>Validation</small>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="code-block" data-lang="Java">
+<span class="code-keyword">@WebService</span>(
+    targetNamespace = <span class="code-string">"http://smartcity.com/airquality"</span>
+)
+<span class="code-keyword">public class</span> <span class="code-function">AirQualityService</span> {
+
+    <span class="code-keyword">@WebMethod</span>
+    <span class="code-keyword">public</span> AirQualityResponse <span class="code-function">getQuality</span>(
+        <span class="code-keyword">@WebParam</span>(name = <span class="code-string">"zone"</span>) String zone
+    ) {
+        <span class="code-comment">// Validation XML automatique</span>
+        AirQualityResponse response = 
+            <span class="code-keyword">new</span> AirQualityResponse();
+        response.setIndex(<span class="code-string">42</span>);
+        <span class="code-keyword">return</span> response;
+    }
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: SOAP How it Works -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>📋 Comment fonctionne SOAP ?</h2>
+                
+                <div style="display: flex; align-items: flex-start; justify-content: center; gap: 2rem; margin: 2rem 0;">
+                    <!-- WSDL Definition -->
+                    <div class="card" style="flex: 1; max-width: 300px;">
+                        <h4 style="color: #22c55e;">1. WSDL (Contrat)</h4>
+                        <div class="code-block" style="font-size: 0.65rem; margin-top: 1rem;" data-lang="XML">
+&lt;wsdl:definitions&gt;
+  &lt;wsdl:types&gt;
+    &lt;xsd:element name="zone"/&gt;
+  &lt;/wsdl:types&gt;
+  &lt;wsdl:message/&gt;
+  &lt;wsdl:portType/&gt;
+&lt;/wsdl:definitions&gt;
+                        </div>
+                        <p style="font-size: 0.75rem; margin-top: 0.5rem;">Le contrat définit TOUT</p>
+                    </div>
+                    
+                    <!-- Arrow -->
+                    <div style="font-size: 2rem; margin-top: 3rem;">→</div>
+                    
+                    <!-- SOAP Envelope -->
+                    <div class="card" style="flex: 1; max-width: 300px;">
+                        <h4 style="color: #22c55e;">2. Envelope SOAP</h4>
+                        <div class="code-block" style="font-size: 0.65rem; margin-top: 1rem;" data-lang="XML">
+&lt;soap:Envelope&gt;
+  &lt;soap:Header/&gt;
+  &lt;soap:Body&gt;
+    &lt;getQuality&gt;
+      &lt;zone&gt;Centre&lt;/zone&gt;
+    &lt;/getQuality&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;
+                        </div>
+                        <p style="font-size: 0.75rem; margin-top: 0.5rem;">Structure stricte</p>
+                    </div>
+                    
+                    <!-- Arrow -->
+                    <div style="font-size: 2rem; margin-top: 3rem;">→</div>
+                    
+                    <!-- Response -->
+                    <div class="card" style="flex: 1; max-width: 300px;">
+                        <h4 style="color: #22c55e;">3. Réponse</h4>
+                        <div class="code-block" style="font-size: 0.65rem; margin-top: 1rem;" data-lang="XML">
+&lt;soap:Envelope&gt;
+  &lt;soap:Body&gt;
+    &lt;getQualityResponse&gt;
+      &lt;index&gt;42&lt;/index&gt;
+      &lt;status&gt;GOOD&lt;/status&gt;
+    &lt;/getQualityResponse&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;
+                        </div>
+                        <p style="font-size: 0.75rem; margin-top: 0.5rem;">Fortement typée</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: gRPC Deep Dive -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3 style="color: #3b82f6;">🚨 Service Urgences</h3>
+                    <h2>La Vitesse du gRPC</h2>
+                    <p class="highlight">Quand chaque milliseconde compte.</p>
+                    
+                    <div class="card" style="border-left: 4px solid #ef4444; margin: 1.5rem 0; background: rgba(239, 68, 68, 0.1);">
+                        <h4>⚡ Pourquoi gRPC ici ?</h4>
+                        <ul style="font-size: 0.85rem; margin-top: 0.5rem;">
+                            <li><strong>Binaire:</strong> 10x plus compact que JSON</li>
+                            <li><strong>HTTP/2:</strong> Multiplexing, streaming</li>
+                            <li><strong>Bi-directionnel:</strong> Flux temps réel</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Performance Comparison -->
+                    <div style="margin-top: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                            <span style="width: 60px; font-size: 0.8rem;">JSON</span>
+                            <div class="perf-bar" style="flex: 1;"><div class="perf-fill" style="width: 30%; background: #ef4444;"></div></div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                            <span style="width: 60px; font-size: 0.8rem;">XML</span>
+                            <div class="perf-bar" style="flex: 1;"><div class="perf-fill" style="width: 20%; background: #eab308;"></div></div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <span style="width: 60px; font-size: 0.8rem;">Protobuf</span>
+                            <div class="perf-bar" style="flex: 1;"><div class="perf-fill" style="width: 100%; background: var(--accent);"></div></div>
+                        </div>
+                        <small style="color: var(--text-muted);">Débit relatif (req/sec)</small>
+                    </div>
+                </div>
+                <div>
+                    <div class="code-block" data-lang="Protobuf">
+<span class="code-keyword">syntax</span> = <span class="code-string">"proto3"</span>;
+
+<span class="code-keyword">service</span> <span class="code-function">EmergencyService</span> {
+    <span class="code-keyword">rpc</span> <span class="code-function">CreateAlert</span> (AlertRequest) 
+        <span class="code-keyword">returns</span> (AlertResponse);
+    
+    <span class="code-keyword">rpc</span> <span class="code-function">StreamAlerts</span> (Empty) 
+        <span class="code-keyword">returns</span> (<span class="code-keyword">stream</span> Alert);
+}
+
+<span class="code-keyword">message</span> <span class="code-function">AlertRequest</span> {
+    <span class="code-keyword">string</span> emergency_type = <span class="code-string">1</span>;
+    <span class="code-keyword">string</span> severity = <span class="code-string">2</span>;
+    <span class="code-keyword">double</span> latitude = <span class="code-string">3</span>;
+    <span class="code-keyword">double</span> longitude = <span class="code-string">4</span>;
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: gRPC How it Works -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>⚡ Comment fonctionne gRPC ?</h2>
+                
+                <div style="display: flex; justify-content: center; align-items: center; gap: 3rem; margin: 2rem 0;">
+                    <div class="card" style="text-align: center; padding: 2rem;">
+                        <span style="font-size: 3rem;">📝</span>
+                        <h4>.proto</h4>
+                        <p style="font-size: 0.8rem;">Définition du contrat</p>
+                    </div>
+                    <div style="font-size: 2rem;">→</div>
+                    <div class="card" style="text-align: center; padding: 2rem;">
+                        <span style="font-size: 3rem;">🔧</span>
+                        <h4>protoc</h4>
+                        <p style="font-size: 0.8rem;">Génère le code</p>
+                    </div>
+                    <div style="font-size: 2rem;">→</div>
+                    <div class="card" style="text-align: center; padding: 2rem;">
+                        <span style="font-size: 3rem;">☕</span>
+                        <h4>Java Stubs</h4>
+                        <p style="font-size: 0.8rem;">Classes prêtes à l'emploi</p>
+                    </div>
+                </div>
+                
+                <div class="grid-2" style="margin-top: 1rem;">
+                    <div class="card">
+                        <h4 style="color: #3b82f6;">🚀 Avantages clés</h4>
+                        <ul style="font-size: 0.85rem;">
+                            <li>Sérialisation binaire ultra-rapide</li>
+                            <li>Typage fort garanti par le compilateur</li>
+                            <li>Streaming bidirectionnel natif</li>
+                            <li>Génération multi-langages</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4 style="color: #3b82f6;">🎯 Cas d'usage</h4>
+                        <ul style="font-size: 0.85rem;">
+                            <li>Communication inter-services</li>
+                            <li>Systèmes temps réel critiques</li>
+                            <li>IoT et télémétrie</li>
+                            <li>Micro-batching de données</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 13: GraphQL Deep Dive -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3 style="color: #e879f9;">🎭 Service Événements</h3>
+                    <h2>La Flexibilité de GraphQL</h2>
+                    
+                    <div class="card" style="border-left: 4px solid #e879f9; margin-bottom: 1.5rem;">
+                        <h4>👑 Le Client est Roi</h4>
+                        <p style="font-size: 0.9rem;">Le client décide exactement quelles données il veut. Fini l'over-fetching !</p>
+                    </div>
+                    
+                    <div class="grid-2" style="gap: 1rem; margin-top: 1rem;">
+                        <div style="background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 10px; text-align: center;">
+                            <h4 style="color: #ef4444;">❌ REST</h4>
+                            <p style="font-size: 0.75rem;">Reçoit TOUT même si on veut juste le titre</p>
+                        </div>
+                        <div style="background: rgba(0, 255, 136, 0.1); padding: 1rem; border-radius: 10px; text-align: center;">
+                            <h4 style="color: var(--accent);">✅ GraphQL</h4>
+                            <p style="font-size: 0.75rem;">Demande uniquement ce dont on a besoin</p>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="code-block" data-lang="GraphQL">
+<span class="code-comment"># Le client demande exactement ce qu'il veut</span>
+
+<span class="code-keyword">query</span> {
+    getAllEvents {
+        title
+        location
+        <span class="code-comment"># Je ne demande PAS:</span>
+        <span class="code-comment"># - description</span>
+        <span class="code-comment"># - participants</span>
+        <span class="code-comment"># - organizer</span>
+        <span class="code-comment"># = Économie de bande passante!</span>
+    }
+}
+                    </div>
+                    
+                    <div style="margin-top: 1rem; background: var(--bg-card); padding: 1rem; border-radius: 10px;">
+                        <h4 style="color: var(--accent); font-size: 0.9rem;">Réponse</h4>
+                        <pre style="font-size: 0.7rem;">{
+  "data": {
+    "getAllEvents": [
+      {"title": "Festival", "location": "Parc"},
+      {"title": "Concert", "location": "Centre"}
+    ]
+  }
+}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 14: GraphQL Implementation -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>🎯 Implémentation GraphQL</h2>
+                
+                <div class="grid-2" style="margin-top: 1.5rem;">
+                    <div>
+                        <h4 style="color: #e879f9; margin-bottom: 1rem;">📋 Schema (schema.graphqls)</h4>
+                        <div class="code-block" data-lang="GraphQL">
+<span class="code-keyword">type</span> <span class="code-function">Query</span> {
+    getAllEvents: [Event]
+    getEventById(id: ID!): Event
+}
+
+<span class="code-keyword">type</span> <span class="code-function">Event</span> {
+    id: ID!
+    title: String!
+    description: String
+    location: String
+    date: String
+    participants: [String]
+    organizer: Organizer
+}
+
+<span class="code-keyword">type</span> <span class="code-function">Organizer</span> {
+    name: String!
+    email: String
+}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="color: #e879f9; margin-bottom: 1rem;">☕ Controller Java</h4>
+                        <div class="code-block" data-lang="Java">
+<span class="code-keyword">@Controller</span>
+<span class="code-keyword">public class</span> <span class="code-function">EventController</span> {
+
+    <span class="code-keyword">@QueryMapping</span>
+    <span class="code-keyword">public</span> List&lt;Event&gt; <span class="code-function">getAllEvents</span>() {
+        <span class="code-keyword">return</span> eventRepository.findAll();
+    }
+
+    <span class="code-keyword">@QueryMapping</span>
+    <span class="code-keyword">public</span> Event <span class="code-function">getEventById</span>(
+        <span class="code-keyword">@Argument</span> String id
+    ) {
+        <span class="code-keyword">return</span> eventRepository.findById(id);
+    }
+
+    <span class="code-comment">// Resolver pour champ imbriqué</span>
+    <span class="code-keyword">@SchemaMapping</span>
+    <span class="code-keyword">public</span> Organizer <span class="code-function">organizer</span>(Event e) {
+        <span class="code-keyword">return</span> organizerService.find(e.getOrgId());
+    }
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 15: Protocol Comparison -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>⚖️ Comparatif des Protocoles</h2>
+                
+                <table class="comparison-table" style="margin-top: 1.5rem;">
+                    <thead>
+                        <tr>
+                            <th>Protocole</th>
+                            <th>Format</th>
+                            <th>Performance</th>
+                            <th>Typage</th>
+                            <th>Usage Smart Village</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span style="color: #ef4444; font-weight: 600;">REST</span></td>
+                            <td>JSON / HTTP</td>
+                            <td>⭐⭐⭐</td>
+                            <td>Faible</td>
+                            <td>Mobilité, CRUD public</td>
+                        </tr>
+                        <tr>
+                            <td><span style="color: #22c55e; font-weight: 600;">SOAP</span></td>
+                            <td>XML / HTTP</td>
+                            <td>⭐⭐</td>
+                            <td>Fort (WSDL)</td>
+                            <td>Données gouvernementales</td>
+                        </tr>
+                        <tr>
+                            <td><span style="color: #3b82f6; font-weight: 600;">gRPC</span></td>
+                            <td>Proto / HTTP2</td>
+                            <td>⭐⭐⭐⭐⭐</td>
+                            <td>Fort (Proto)</td>
+                            <td>Urgences temps réel</td>
+                        </tr>
+                        <tr>
+                            <td><span style="color: #e879f9; font-weight: 600;">GraphQL</span></td>
+                            <td>JSON / HTTP</td>
+                            <td>⭐⭐⭐⭐</td>
+                            <td>Fort (Schema)</td>
+                            <td>Événements flexibles</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 2rem; text-align: center;">
+                    <p class="highlight" style="font-size: 1.2rem;">🎯 Le bon protocole pour le bon besoin !</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 16: API Gateway -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3>🚪 API Gateway</h3>
+                    <h2>Le Chef d'Orchestre</h2>
+                    <p>Point d'entrée unique qui masque la complexité du backend.</p>
+                    
+                    <ul style="margin-top: 1.5rem;">
+                        <li><strong>Routage:</strong> Redirige vers le bon service</li>
+                        <li><strong>Load Balancing:</strong> Distribue la charge</li>
+                        <li><strong>Sécurité:</strong> Authentification centralisée</li>
+                        <li><strong>Rate Limiting:</strong> Protection contre les abus</li>
+                    </ul>
+                    
+                    <div class="code-block" style="margin-top: 1.5rem;" data-lang="YAML">
+<span class="code-keyword">spring:</span>
+  <span class="code-keyword">cloud:</span>
+    <span class="code-keyword">gateway:</span>
+      <span class="code-keyword">routes:</span>
+        - id: <span class="code-string">mobility</span>
+          uri: <span class="code-string">http://mobility-service:8081</span>
+          predicates:
+            - Path=<span class="code-string">/mobility/**</span>
+        - id: <span class="code-string">emergency</span>
+          uri: <span class="code-string">http://emergency-service:8083</span>
+          predicates:
+            - Path=<span class="code-string">/emergency/**</span>
+                    </div>
+                </div>
+                <div>
+                    <!-- Gateway Visualization -->
+                    <div style="background: var(--bg-card); padding: 2rem; border-radius: 16px; text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🌐</div>
+                        <h4>Internet</h4>
+                        <div class="flow-arrow" style="margin: 1rem auto;"></div>
+                        <div style="background: linear-gradient(135deg, var(--warning), #d97706); padding: 1.5rem; border-radius: 10px; margin: 1rem 0;">
+                            <span style="font-size: 2rem;">🚪</span>
+                            <h4>API Gateway :8080</h4>
+                        </div>
+                        <div class="flow-arrow" style="margin: 1rem auto;"></div>
+                        <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                            <div style="background: var(--glass); padding: 0.8rem; border-radius: 8px; font-size: 0.7rem;">🚌 :8081</div>
+                            <div style="background: var(--glass); padding: 0.8rem; border-radius: 8px; font-size: 0.7rem;">🌫️ :8082</div>
+                            <div style="background: var(--glass); padding: 0.8rem; border-radius: 8px; font-size: 0.7rem;">🚨 :8083</div>
+                            <div style="background: var(--glass); padding: 0.8rem; border-radius: 8px; font-size: 0.7rem;">🎭 :8084</div>
+                            <div style="background: var(--glass); padding: 0.8rem; border-radius: 8px; font-size: 0.7rem;">🧠 :8085</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 17: Docker Introduction -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3>🐳 Docker</h3>
+                    <h2>"Ça marche sur ma machine..."</h2>
+                    <p class="highlight">Maintenant, ça marche PARTOUT !</p>
+                    
+                    <ul style="margin-top: 1.5rem;">
+                        <li><strong>Isolation:</strong> Chaque service = 1 conteneur</li>
+                        <li><strong>Portabilité:</strong> Dev = Prod</li>
+                        <li><strong>Reproductibilité:</strong> Image immuable</li>
+                        <li><strong>Légèreté:</strong> Pas de VM, juste le nécessaire</li>
+                    </ul>
+                    
+                    <div class="code-block" style="margin-top: 1.5rem;" data-lang="Dockerfile">
+<span class="code-comment"># Dockerfile Spring Boot</span>
+<span class="code-keyword">FROM</span> eclipse-temurin:17-jdk-alpine
+<span class="code-keyword">VOLUME</span> /tmp
+<span class="code-keyword">COPY</span> target/*.jar app.jar
+<span class="code-keyword">EXPOSE</span> 8080
+<span class="code-keyword">ENTRYPOINT</span> [<span class="code-string">"java"</span>,<span class="code-string">"-jar"</span>,<span class="code-string">"/app.jar"</span>]
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <!-- Docker Visual -->
+                    <div style="background: linear-gradient(135deg, #0db7ed 0%, #066da5 100%); padding: 2rem; border-radius: 20px; position: relative;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">🐳</div>
+                        <h3 style="color: white;">Docker Engine</h3>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; margin-top: 1.5rem;">
+                            <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 10px;">
+                                <span style="font-size: 1.5rem;">🚌</span>
+                                <p style="font-size: 0.7rem; margin: 0; color: white;">Mobility</p>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 10px;">
+                                <span style="font-size: 1.5rem;">🌫️</span>
+                                <p style="font-size: 0.7rem; margin: 0; color: white;">Air Quality</p>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 10px;">
+                                <span style="font-size: 1.5rem;">🚨</span>
+                                <p style="font-size: 0.7rem; margin: 0; color: white;">Emergency</p>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 10px;">
+                                <span style="font-size: 1.5rem;">🎭</span>
+                                <p style="font-size: 0.7rem; margin: 0; color: white;">Events</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 18: Database H2 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3>💾 Base de Données H2</h3>
+                    <h2>Persistance Légère & Embarquée</h2>
+                    <p class="highlight">Une base de données par service</p>
+                    
+                    <div class="card" style="border-left: 4px solid var(--primary); margin: 1.5rem 0;">
+                        <h4>🎯 Pourquoi H2 ?</h4>
+                        <ul style="font-size: 0.85rem; margin-top: 0.5rem;">
+                            <li><strong>Embarquée:</strong> Pas de serveur externe à gérer</li>
+                            <li><strong>Rapide:</strong> En mémoire pour dev/test</li>
+                            <li><strong>Console Web:</strong> Interface admin intégrée</li>
+                            <li><strong>Compatible:</strong> SQL standard (JPA)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card" style="border-left: 4px solid var(--accent); background: rgba(0, 255, 136, 0.05);">
+                        <h4 style="color: var(--accent);">✨ Avantages Dev</h4>
+                        <ul style="font-size: 0.85rem; margin-top: 0.5rem;">
+                            <li>Démarrage instantané</li>
+                            <li>Zéro configuration externe</li>
+                            <li>Reset automatique (create-drop)</li>
+                            <li>Debugging facile avec console</li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <div class="code-block" data-lang="YAML" style="font-size: 0.65rem; max-height: 400px; overflow-y: auto;">
+        <span class="code-keyword">spring:</span>
+        <span class="code-keyword">application:</span>
+            <span class="code-keyword">name:</span> <span class="code-string">emergency-service</span>
+        
+        <span class="code-comment"># 💾 Configuration H2</span>
+        <span class="code-keyword">datasource:</span>
+            <span class="code-keyword">url:</span> <span class="code-string">jdbc:h2:mem:emergencydb</span>
+            <span class="code-keyword">driverClassName:</span> org.h2.Driver
+            <span class="code-keyword">username:</span> sa
+            <span class="code-keyword">password:</span> password
+        
+        <span class="code-comment"># 🌐 Console Web H2</span>
+        <span class="code-keyword">h2:</span>
+            <span class="code-keyword">console:</span>
+            <span class="code-keyword">enabled:</span> <span class="code-string">true</span>
+            <span class="code-keyword">path:</span> <span class="code-string">/h2-console</span>
+            <span class="code-keyword">settings:</span>
+                <span class="code-keyword">web-allow-others:</span> <span class="code-string">true</span>
+        
+        <span class="code-comment"># 🔧 JPA Configuration</span>
+        <span class="code-keyword">jpa:</span>
+            <span class="code-keyword">database-platform:</span> org.hibernate.dialect.H2Dialect
+            <span class="code-keyword">hibernate:</span>
+            <span class="code-keyword">ddl-auto:</span> <span class="code-string">create-drop</span>
+            <span class="code-keyword">show-sql:</span> <span class="code-string">false</span>
+            <span class="code-keyword">defer-datasource-initialization:</span> <span class="code-string">true</span>
+        
+        <span class="code-comment"># 📝 Init Data</span>
+        <span class="code-keyword">sql:</span>
+            <span class="code-keyword">init:</span>
+            <span class="code-keyword">mode:</span> <span class="code-string">always</span>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; background: var(--bg-card); padding: 1rem; border-radius: 10px;">
+                        <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem;">🌐 Accès Console</h4>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <code style="font-size: 0.75rem; background: var(--code-bg); padding: 0.3rem 0.6rem; border-radius: 5px;">
+                                http://localhost:8083/h2-console
+                            </code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 19: Database Evolution Path -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>🚀 Évolution de la Persistance</h2>
+                <p>De H2 en développement vers des bases production-ready</p>
+                
+                <div style="position: relative; margin-top: 2rem;">
+                    <!-- Timeline -->
+                    <div style="position: absolute; top: 40px; left: 50%; transform: translateX(-50%); width: 80%; height: 3px; background: linear-gradient(90deg, var(--primary), var(--accent), var(--secondary), var(--warning));"></div>
+                    
+                    <div style="display: flex; justify-content: space-between; padding: 0 10%;">
+                        <!-- Phase 1: Dev -->
+                        <div style="text-align: center; width: 22%;">
+                            <div style="width: 80px; height: 80px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; position: relative; z-index: 1; box-shadow: 0 0 20px rgba(0,212,255,0.4);">
+                                <span style="font-size: 2rem;">💾</span>
+                            </div>
+                            <h4 style="margin-top: 1rem; font-size: 1rem;">Dev/Test</h4>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">H2 In-Memory</p>
+                            <div class="card" style="margin-top: 1rem; padding: 0.8rem;">
+                                <p style="font-size: 0.7rem; margin: 0;">✅ Rapidité<br>✅ Zéro config<br>✅ Reset facile</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Phase 2: Staging -->
+                        <div style="text-align: center; width: 22%;">
+                            <div style="width: 80px; height: 80px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; position: relative; z-index: 1; box-shadow: 0 0 20px rgba(0,255,136,0.4);">
+                                <span style="font-size: 2rem;">🗄️</span>
+                            </div>
+                            <h4 style="margin-top: 1rem; font-size: 1rem;">Staging</h4>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">H2 File-Based</p>
+                            <div class="card" style="margin-top: 1rem; padding: 0.8rem;">
+                                <p style="font-size: 0.7rem; margin: 0;">✅ Persistance<br>✅ Transition douce<br>⚠️ Mono-user</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Phase 3: Production Light -->
+                        <div style="text-align: center; width: 22%;">
+                            <div style="width: 80px; height: 80px; background: var(--secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; position: relative; z-index: 1; box-shadow: 0 0 20px rgba(124,58,237,0.4);">
+                                <span style="font-size: 2rem;">🐘</span>
+                            </div>
+                            <h4 style="margin-top: 1rem; font-size: 1rem;">Production</h4>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">PostgreSQL</p>
+                            <div class="card" style="margin-top: 1rem; padding: 0.8rem;">
+                                <p style="font-size: 0.7rem; margin: 0;">✅ Multi-user<br>✅ ACID complet<br>✅ Extensions</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Phase 4: Scale -->
+                        <div style="text-align: center; width: 22%;">
+                            <div style="width: 80px; height: 80px; background: var(--warning); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; position: relative; z-index: 1; box-shadow: 0 0 20px rgba(255,107,53,0.4);">
+                                <span style="font-size: 2rem;">📊</span>
+                            </div>
+                            <h4 style="margin-top: 1rem; font-size: 1rem;">Scale</h4>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Mix Spécialisé</p>
+                            <div class="card" style="margin-top: 1rem; padding: 0.8rem;">
+                                <p style="font-size: 0.7rem; margin: 0;">MongoDB<br>Redis<br>TimescaleDB</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem; text-align: center;">
+                    <div class="card" style="display: inline-block; padding: 1rem 2rem; background: rgba(0,212,255,0.1);">
+                        <h4 style="color: var(--primary); margin-bottom: 0.5rem;">💡 Migration Transparente</h4>
+                        <p style="font-size: 0.85rem; margin: 0;">Grâce à JPA, changer de DB = changer 3 lignes de config ! 🎯</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 20: Database Per Service Pattern -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3>🗄️ Database per Service</h3>
+                    <h2>Isolation des Données</h2>
+                    <p>Chaque microservice gère sa propre base de données</p>
+                    
+                    <div class="card" style="border-left: 4px solid var(--accent); margin: 1.5rem 0; background: rgba(0,255,136,0.05);">
+                        <h4 style="color: var(--accent);">✅ Avantages</h4>
+                        <ul style="font-size: 0.85rem; margin-top: 0.5rem;">
+                            <li><strong>Autonomie:</strong> Chaque équipe choisit sa techno</li>
+                            <li><strong>Scalabilité:</strong> Scale indépendamment</li>
+                            <li><strong>Résilience:</strong> Panne isolée</li>
+                            <li><strong>Évolution:</strong> Schéma sans coordination</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card" style="border-left: 4px solid var(--warning); background: rgba(255,107,53,0.05);">
+                        <h4 style="color: var(--warning);">⚠️ Défis</h4>
+                        <ul style="font-size: 0.85rem; margin-top: 0.5rem;">
+                            <li>Transactions distribuées</li>
+                            <li>Cohérence éventuelle</li>
+                            <li>Requêtes multi-services</li>
+                        </ul>
+                        <p style="font-size: 0.75rem; margin-top: 0.5rem; color: var(--text-muted);">
+                            💡 Solution: Event-driven + Saga pattern
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <!-- Visual: Each service with its DB -->
+                    <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 16px;">
+                        <h4 style="text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem;">Architecture de Données</h4>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <!-- Mobility -->
+                            <div style="display: flex; align-items: center; gap: 1rem; background: rgba(239,68,68,0.1); padding: 1rem; border-radius: 10px;">
+                                <div style="flex: 1; text-align: center;">
+                                    <span style="font-size: 1.5rem;">🚌</span>
+                                    <p style="font-size: 0.7rem; margin: 0;">Mobility Service</p>
+                                </div>
+                                <div style="font-size: 1.5rem; color: var(--primary);">⟶</div>
+                                <div style="flex: 1; text-align: center; background: var(--code-bg); padding: 0.5rem; border-radius: 8px;">
+                                    <span style="font-size: 1.2rem;">💾</span>
+                                    <p style="font-size: 0.65rem; margin: 0; font-family: monospace;">mobilitydb</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Air Quality -->
+                            <div style="display: flex; align-items: center; gap: 1rem; background: rgba(34,197,94,0.1); padding: 1rem; border-radius: 10px;">
+                                <div style="flex: 1; text-align: center;">
+                                    <span style="font-size: 1.5rem;">🌫️</span>
+                                    <p style="font-size: 0.7rem; margin: 0;">Air Quality Service</p>
+                                </div>
+                                <div style="font-size: 1.5rem; color: var(--primary);">⟶</div>
+                                <div style="flex: 1; text-align: center; background: var(--code-bg); padding: 0.5rem; border-radius: 8px;">
+                                    <span style="font-size: 1.2rem;">💾</span>
+                                    <p style="font-size: 0.65rem; margin: 0; font-family: monospace;">airqualitydb</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Emergency -->
+                            <div style="display: flex; align-items: center; gap: 1rem; background: rgba(59,130,246,0.1); padding: 1rem; border-radius: 10px;">
+                                <div style="flex: 1; text-align: center;">
+                                    <span style="font-size: 1.5rem;">🚨</span>
+                                    <p style="font-size: 0.7rem; margin: 0;">Emergency Service</p>
+                                </div>
+                                <div style="font-size: 1.5rem; color: var(--primary);">⟶</div>
+                                <div style="flex: 1; text-align: center; background: var(--code-bg); padding: 0.5rem; border-radius: 8px;">
+                                    <span style="font-size: 1.2rem;">💾</span>
+                                    <p style="font-size: 0.65rem; margin: 0; font-family: monospace;">emergencydb</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Events -->
+                            <div style="display: flex; align-items: center; gap: 1rem; background: rgba(232,121,249,0.1); padding: 1rem; border-radius: 10px;">
+                                <div style="flex: 1; text-align: center;">
+                                    <span style="font-size: 1.5rem;">🎭</span>
+                                    <p style="font-size: 0.7rem; margin: 0;">Events Service</p>
+                                </div>
+                                <div style="font-size: 1.5rem; color: var(--primary);">⟶</div>
+                                <div style="flex: 1; text-align: center; background: var(--code-bg); padding: 0.5rem; border-radius: 8px;">
+                                    <span style="font-size: 1.2rem;">💾</span>
+                                    <p style="font-size: 0.65rem; margin: 0; font-family: monospace;">eventsdb</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p style="text-align: center; font-size: 0.75rem; margin-top: 1rem; color: var(--text-muted);">
+                            🔒 Isolation complète = Autonomie maximale
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 18: Docker Compose -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>🎼 Docker Compose - L'Orchestre</h2>
+                <p>6 services, 1 seule commande : <code style="background: var(--glass); padding: 0.3rem 0.8rem; border-radius: 5px;">docker-compose up -d</code></p>
+                
+                <div class="grid-2" style="margin-top: 1.5rem;">
+                    <div class="code-block" style="height: 300px; overflow-y: auto;" data-lang="YAML">
+<span class="code-keyword">version:</span> <span class="code-string">'3.8'</span>
+<span class="code-keyword">services:</span>
+  
+  <span class="code-function">api-gateway:</span>
+    <span class="code-keyword">build:</span> ./api-gateway
+    <span class="code-keyword">ports:</span>
+      - <span class="code-string">"8080:8080"</span>
+    <span class="code-keyword">depends_on:</span>
+      - mobility-service
+      - air-quality-service
+      - emergency-service
+      - urban-events-service
+  
+  <span class="code-function">mobility-service:</span>
+    <span class="code-keyword">build:</span> ./mobility-service
+    <span class="code-keyword">ports:</span>
+      - <span class="code-string">"8081:8081"</span>
+  
+  <span class="code-function">air-quality-service:</span>
+    <span class="code-keyword">build:</span> ./air-quality-service
+    <span class="code-keyword">ports:</span>
+      - <span class="code-string">"8082:8082"</span>
+  
+  <span class="code-function">emergency-service:</span>
+    <span class="code-keyword">build:</span> ./emergency-service
+    <span class="code-keyword">ports:</span>
+      - <span class="code-string">"8083:8083"</span>
+  
+  <span class="code-function">orchestration-service:</span>
+    <span class="code-keyword">build:</span> ./orchestration-service
+    <span class="code-keyword">environment:</span>
+      - GEMINI_API_KEY=<span class="code-string">${KEY}</span>
+                    </div>
+                    
+                    <div>
+                        <h4 style="margin-bottom: 1rem;">🔗 Réseau Docker</h4>
+                        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px;">
+                            <p style="font-size: 0.85rem; margin-bottom: 1rem;">Tous les conteneurs communiquent via le réseau interne Docker :</p>
+                            <div class="docker-container">
+                                <span>🚪</span>
+                                <span style="font-family: monospace; font-size: 0.8rem;">api-gateway:8080</span>
+                            </div>
+                            <div class="docker-container">
+                                <span>🚌</span>
+                                <span style="font-family: monospace; font-size: 0.8rem;">mobility-service:8081</span>
+                            </div>
+                            <div class="docker-container">
+                                <span>🧠</span>
+                                <span style="font-family: monospace; font-size: 0.8rem;">orchestration-service:8085</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.75rem; margin-top: 1rem; color: var(--text-muted);">
+                            💡 Les services se découvrent par leur nom de service, pas par IP !
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 19: AI Integration -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3>🧠 Intelligence Artificielle</h3>
+                    <h2>Gemini au Cœur</h2>
+                    <p class="highlight">Le "Cerveau" de la Smart City</p>
+                    
+                    <p>L'IA ne fait pas que du chat. Elle orchestre intelligemment les appels aux différents services.</p>
+                    
+                    <div style="margin-top: 1.5rem; border-left: 4px solid var(--secondary); padding-left: 1rem;">
+                        <h4>Le Flow</h4>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+                            <strong>Utilisateur</strong> → "Comment aller au concert ce soir ?"<br>
+                            <strong>Gemini</strong> → Analyse l'intention<br>
+                            <strong>Orchestrator</strong> → Appelle Events (GraphQL) + Mobility (REST)<br>
+                            <strong>Réponse</strong> → Synthèse intelligente
+                        </p>
+                    </div>
+                </div>
+                <div class="diagram-container" style="padding: 1rem;">
+                    <img src="docs/screenshots/chat-ai.png" alt="Chat AI" style="border-radius: 10px;"
+                         onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'padding: 3rem; text-align: center; background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(0,212,255,0.2)); border-radius: 10px;\'>💬<br><br>Interface Chat IA<br><small>Conversation naturelle avec votre ville</small></div>';">
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 20: AI Features -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>✨ Fonctionnalités IA</h2>
+                
+                <div class="grid-3" style="margin-top: 2rem;">
+                    <div class="card" style="text-align: center;">
+                        <div class="icon-circle" style="border-color: var(--primary);">💬</div>
+                        <h3>Chat Naturel</h3>
+                        <p style="font-size: 0.85rem;">"Comment est la qualité de l'air ?"</p>
+                        <small style="color: var(--accent);">→ Traduit en appel SOAP</small>
+                    </div>
+                    <div class="card" style="text-align: center;">
+                        <div class="icon-circle" style="border-color: var(--accent);">📅</div>
+                        <h3>Planification</h3>
+                        <p style="font-size: 0.85rem;">"Organise ma journée sport"</p>
+                        <small style="color: var(--accent);">→ Croise Events + Météo + Transport</small>
+                    </div>
+                    <div class="card" style="text-align: center;">
+                        <div class="icon-circle" style="border-color: var(--secondary);">🚨</div>
+                        <h3>Analyse Risque</h3>
+                        <p style="font-size: 0.85rem;">Détection d'anomalies</p>
+                        <small style="color: var(--accent);">→ Analyse contextuelle des alertes</small>
+                    </div>
+                </div>
+                
+                <div style="background: var(--code-bg); padding: 1rem; border-radius: 10px; margin-top: 2rem; font-family: monospace; text-align: center; font-size: 0.8rem;">
+                    <span style="color: var(--primary);">User Query</span> → 
+                    <span style="color: var(--secondary);">Gemini Analysis</span> → 
+                    <span style="color: var(--accent);">Multi-Protocol Calls</span> → 
+                    <span style="color: var(--warning);">AI Synthesis</span> → 
+                    <span style="color: var(--primary);">Smart Response</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 21: Request Journey -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>🛤️ Voyage d'une Requête</h2>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; margin: 2rem 0; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: 16px;">
+                    <div style="text-align: center; flex: 1;">
+                        <div style="font-size: 2.5rem;">👤</div>
+                        <small>User</small>
+                    </div>
+                    <div style="color: var(--primary); font-size: 1.5rem;">→</div>
+                    <div style="text-align: center; flex: 1;">
+                        <div style="font-size: 2.5rem;">⚛️</div>
+                        <small>React</small>
+                    </div>
+                    <div style="color: var(--primary); font-size: 1.5rem;">→</div>
+                    <div style="text-align: center; flex: 1;">
+                        <div style="font-size: 2.5rem;">🚪</div>
+                        <small>Gateway</small>
+                    </div>
+                    <div style="color: var(--primary); font-size: 1.5rem;">→</div>
+                    <div style="text-align: center; flex: 1;">
+                        <div style="font-size: 2.5rem;">🧠</div>
+                        <small>Orchestrator</small>
+                    </div>
+                    <div style="color: var(--primary); font-size: 1.5rem;">→</div>
+                    <div style="text-align: center; flex: 1;">
+                        <div style="font-size: 2.5rem;">⚙️</div>
+                        <small>Services</small>
+                    </div>
+                </div>
+                
+                <div class="grid-2">
+                    <div class="card">
+                        <h4 style="color: var(--primary);">📝 Exemple concret</h4>
+                        <ol style="font-size: 0.85rem; margin-left: 1.2rem; margin-top: 1rem;">
+                            <li>User: "Je veux aller au concert"</li>
+                            <li>React POST /orchestration/chat</li>
+                            <li>Gateway authentifie & route</li>
+                            <li>Gemini analyse l'intention</li>
+                            <li>Appels: Events (GraphQL) + Mobility (REST)</li>
+                            <li>Synthèse intelligente retournée</li>
+                        </ol>
+                    </div>
+                    <div class="card">
+                        <h4 style="color: var(--accent);">✅ Résultat</h4>
+                        <div class="code-block" style="font-size: 0.7rem; margin-top: 1rem;">
+{
+  "message": "Le concert 'Jazz Night' a lieu 
+  ce soir à 20h au Parc Central. 
+  Prenez le Bus 42 à 19h30 depuis 
+  votre position pour arriver à temps.",
+  "sources": ["events", "mobility"]
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+                <!-- Slide 22: Service Discovery (Completed) -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3>🔍 Service Discovery</h3>
+                    <h2>Comment les services se trouvent ?</h2>
+                    
+                    <div class="grid-2" style="gap: 1rem; margin-top: 1.5rem;">
+                        <div class="card" style="border-left: 4px solid #ef4444;">
+                            <h4 style="color: #ef4444;">❌ Sans Discovery</h4>
+                            <code style="font-size: 0.8rem;">http://localhost:8081</code>
+                            <p style="font-size: 0.8rem; margin-top: 0.5rem;">Hardcodé = Fragile</p>
+                        </div>
+                        <div class="card" style="border-left: 4px solid var(--accent);">
+                            <h4 style="color: var(--accent);">✅ Avec Discovery</h4>
+                            <code style="font-size: 0.8rem;">http://mobility-service:8081</code>
+                            <p style="font-size: 0.8rem; margin-top: 0.5rem;">DNS Docker = Dynamique</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 1.5rem;">
+                        <h4>🐳 Docker DNS Magic</h4>
+                        <p style="font-size: 0.85rem;">Docker Compose crée un réseau interne où chaque service est accessible par son nom !</p>
+                    </div>
+                </div>
+                <div>
+                    <!-- Service Discovery Animation -->
+                    <div style="background: var(--bg-card); padding: 2rem; border-radius: 16px; position: relative; min-height: 300px;">
+                        <div style="text-align: center; margin-bottom: 2rem;">
+                            <span style="font-size: 2rem;">🌐</span>
+                            <h4>Docker Network</h4>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 1rem;">
+                            <div class="service-node" style="text-align: center; animation: bounce 2s infinite;">
+                                <div style="width: 60px; height: 60px; background: var(--glass); border: 2px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">🚌</div>
+                                <small style="display: block; margin-top: 0.5rem;">mobility</small>
+                            </div>
+                            <div class="service-node" style="text-align: center; animation: bounce 2s infinite 0.3s;">
+                                <div style="width: 60px; height: 60px; background: var(--glass); border: 2px solid var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">🌫️</div>
+                                <small style="display: block; margin-top: 0.5rem;">air-quality</small>
+                            </div>
+                            <div class="service-node" style="text-align: center; animation: bounce 2s infinite 0.6s;">
+                                <div style="width: 60px; height: 60px; background: var(--glass); border: 2px solid var(--secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">🚨</div>
+                                <small style="display: block; margin-top: 0.5rem;">emergency</small>
+                            </div>
+                            <div class="service-node" style="text-align: center; animation: bounce 2s infinite 0.9s;">
+                                <div style="width: 60px; height: 60px; background: var(--glass); border: 2px solid #e879f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">🎭</div>
+                                <small style="display: block; margin-top: 0.5rem;">events</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Connecting lines animation -->
+                        <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                            <line x1="50%" y1="30%" x2="25%" y2="70%" class="connection-line" opacity="0.3"/>
+                            <line x1="50%" y1="30%" x2="45%" y2="70%" class="connection-line" opacity="0.3"/>
+                            <line x1="50%" y1="30%" x2="65%" y2="70%" class="connection-line" opacity="0.3"/>
+                            <line x1="50%" y1="30%" x2="85%" y2="70%" class="connection-line" opacity="0.3"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <style>
+            @keyframes bounce {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-10px); }
+            }
+        </style>
+
+        <!-- Slide 23: Documentation APIs -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>📚 Documentation des APIs</h2>
+                <p>Chaque protocole a sa propre façon de se documenter</p>
+                
+                <div class="grid-4" style="margin-top: 2rem;">
+                    <div class="card" style="border-top: 4px solid #ef4444;">
+                        <div style="text-align: center;">
+                            <span style="font-size: 2.5rem;">📖</span>
+                            <h4 style="color: #ef4444;">OpenAPI/Swagger</h4>
+                            <p style="font-size: 0.75rem;">REST</p>
+                        </div>
+                        <div class="code-block" style="font-size: 0.6rem; margin-top: 1rem;">
+openapi: 3.0.0
+paths:
+  /trips:
+    get:
+      summary: Find trips
+      parameters:
+        - name: from
+          in: query
+                        </div>
+                        <p style="font-size: 0.7rem; margin-top: 0.5rem; color: var(--text-muted);">
+                            🌐 Interface web interactive
+                        </p>
+                    </div>
+                    
+                    <div class="card" style="border-top: 4px solid #22c55e;">
+                        <div style="text-align: center;">
+                            <span style="font-size: 2.5rem;">📋</span>
+                            <h4 style="color: #22c55e;">WSDL</h4>
+                            <p style="font-size: 0.75rem;">SOAP</p>
+                        </div>
+                        <div class="code-block" style="font-size: 0.6rem; margin-top: 1rem;">
+&lt;wsdl:definitions&gt;
+  &lt;wsdl:types&gt;
+    &lt;xsd:schema&gt;
+      ...
+    &lt;/xsd:schema&gt;
+  &lt;/wsdl:types&gt;
+&lt;/wsdl:definitions&gt;
+                        </div>
+                        <p style="font-size: 0.7rem; margin-top: 0.5rem; color: var(--text-muted);">
+                            🔒 Contrat strict XML
+                        </p>
+                    </div>
+                    
+                    <div class="card" style="border-top: 4px solid #3b82f6;">
+                        <div style="text-align: center;">
+                            <span style="font-size: 2.5rem;">⚡</span>
+                            <h4 style="color: #3b82f6;">.proto</h4>
+                            <p style="font-size: 0.75rem;">gRPC</p>
+                        </div>
+                        <div class="code-block" style="font-size: 0.6rem; margin-top: 1rem;">
+syntax = "proto3";
+service Emergency {
+  rpc CreateAlert
+    (Request)
+    returns (Response);
+}
+                        </div>
+                        <p style="font-size: 0.7rem; margin-top: 0.5rem; color: var(--text-muted);">
+                            🔧 Génère le code
+                        </p>
+                    </div>
+                    
+                    <div class="card" style="border-top: 4px solid #e879f9;">
+                        <div style="text-align: center;">
+                            <span style="font-size: 2.5rem;">🎯</span>
+                            <h4 style="color: #e879f9;">Schema</h4>
+                            <p style="font-size: 0.75rem;">GraphQL</p>
+                        </div>
+                        <div class="code-block" style="font-size: 0.6rem; margin-top: 1rem;">
+type Query {
+  events: [Event]
+}
+type Event {
+  id: ID!
+  title: String!
+}
+                        </div>
+                        <p style="font-size: 0.7rem; margin-top: 0.5rem; color: var(--text-muted);">
+                            🔍 Introspection native
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 24: Why Each Protocol -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>🎯 Pourquoi ce Protocole ? Où ? Comment ?</h2>
+                
+                <div style="overflow-x: auto; margin-top: 1.5rem;">
+                    <table style="width: 100%; border-collapse: separate; border-spacing: 0; min-width: 800px;">
+                        <thead>
+                            <tr style="background: rgba(0, 212, 255, 0.1);">
+                                <th style="padding: 1rem; text-align: left; border-radius: 10px 0 0 0;">Protocole</th>
+                                <th style="padding: 1rem; text-align: left;">🤔 Pourquoi ?</th>
+                                <th style="padding: 1rem; text-align: left;">📍 Où ?</th>
+                                <th style="padding: 1rem; text-align: left; border-radius: 0 10px 0 0;">⚙️ Comment ?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background: rgba(239, 68, 68, 0.05);">
+                                <td style="padding: 1rem; font-weight: 600; color: #ef4444;">
+                                    <span style="font-size: 1.5rem;">🚌</span> REST
+                                </td>
+                                <td style="padding: 1rem; font-size: 0.85rem;">
+                                    Standard universel, simple, cacheable. Parfait pour les APIs publiques.
+                                </td>
+                                <td style="padding: 1rem; font-size: 0.85rem;">
+                                    <strong>Mobility Service</strong><br>
+                                    Recherche de trajets, horaires bus
+                                </td>
+                                <td style="padding: 1rem; font-size: 0.85rem;">
+                                    Spring MVC + @RestController<br>
+                                    <code>GET /trips?from=A&to=B</code>
+                                </td>
+                            </tr>
+                            <tr style="background: rgba(34, 197, 94, 0.05);">
+                                <td style="padding: 1rem; font-weight: 600; color: #22c55e;">
+                                    <span style="font-size: 1.5rem;">🌫️</span> SOAP
+                                </td>
+                                <td style="padding: 1rem; font-size: 0.85rem;">
+                                    Typage fort, transactions ACID. Pour données gouvernementales critiques.
+                                </td>
+                                <td style="padding: 1rem; font-size: 0.85rem;">
+                                    <strong>Air Quality Service</strong><br>
+                                    Mesures certifiées, normes officielles
+                                </td>
+                                <td style="padding: 1rem; font-size: 0.85rem;">
+                                    JAX-WS + @WebService<br>
+                                    WSDL auto-généré
+                                </td>
+                            </tr>
+                            <tr style="background: rgba(59, 130, 246, 0.05);">
+                                <td style="padding: 1rem; font-weight: 600; color: #3b82f6;">
+                                    <span style="font-size: 1.5rem;">🚨</span> gRPC
+                                </td>
+                                <td style="padding: 1rem; font-size: 0.85rem;">
+                                    Ultra performant, binaire, streaming. Quand chaque ms compte.
+                                </td>
+                                <td style="padding: 1rem; font-size: 0.85rem;">
+                                    <strong>Emergency Service</strong><br>
+                                    Alertes temps réel, dispatch
+                                </td>
+                                <td style="padding: 1rem; font-size: 0.85rem;">
+                                    grpc-java + Protobuf<br>
+                                    HTTP/2 bidirectionnel
+                                </td>
+                            </tr>
+                            <tr style="background: rgba(232, 121, 249, 0.05);">
+                                <td style="padding: 1rem; font-weight: 600; color: #e879f9;">
+                                    <span style="font-size: 1.5rem;">🎭</span> GraphQL
+                                </td>
+                                <td style="padding: 1rem; font-size: 0.85rem;">
+                                    Flexible, pas d'over-fetching. Le client décide ce qu'il veut.
+                                </td>
+                                <td style="padding: 1rem; font-size: 0.85rem;">
+                                    <strong>Events Service</strong><br>
+                                    Calendrier, détails événements
+                                </td>
+                                <td style="padding: 1rem; font-size: 0.85rem;">
+                                    Spring GraphQL<br>
+                                    Schema-first approach
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 25: Microservices Architecture Deep Dive -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3>🏗️ Microservices</h3>
+                    <h2>Architecture en Détail</h2>
+                    
+                    <div class="timeline" style="margin-top: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">1</div>
+                            <div class="card" style="flex: 1; padding: 1rem;">
+                                <h4 style="font-size: 0.9rem;">Séparation des Responsabilités</h4>
+                                <p style="font-size: 0.75rem; margin: 0;">Un service = Une fonction métier</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="width: 40px; height: 40px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">2</div>
+                            <div class="card" style="flex: 1; padding: 1rem;">
+                                <h4 style="font-size: 0.9rem;">Base de Données Isolée</h4>
+                                <p style="font-size: 0.75rem; margin: 0;">Chaque service gère ses propres données</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="width: 40px; height: 40px; background: var(--secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">3</div>
+                            <div class="card" style="flex: 1; padding: 1rem;">
+                                <h4 style="font-size: 0.9rem;">Communication API</h4>
+                                <p style="font-size: 0.75rem; margin: 0;">Protocoles adaptés au besoin</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 40px; height: 40px; background: var(--warning); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">4</div>
+                            <div class="card" style="flex: 1; padding: 1rem;">
+                                <h4 style="font-size: 0.9rem;">Déploiement Indépendant</h4>
+                                <p style="font-size: 0.75rem; margin: 0;">Scale et update séparément</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <!-- Hexagonal Architecture Visualization -->
+                    <div style="background: var(--bg-card); padding: 2rem; border-radius: 16px; text-align: center;">
+                        <h4 style="margin-bottom: 1.5rem;">Hexagonal Architecture</h4>
+                        <div style="position: relative; width: 250px; height: 250px; margin: 0 auto;">
+                            <!-- Center hexagon -->
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; height: 86px; background: linear-gradient(135deg, var(--primary), var(--secondary)); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 1.5rem;">💼</span>
+                            </div>
+                            
+                            <!-- Ports -->
+                            <div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%);" class="port-badge">
+                                <span class="tech-badge" style="font-size: 0.65rem;">REST API</span>
+                            </div>
+                            <div style="position: absolute; top: 50%; right: 0; transform: translateY(-50%);" class="port-badge">
+                                <span class="tech-badge green" style="font-size: 0.65rem;">SOAP</span>
+                            </div>
+                            <div style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);" class="port-badge">
+                                <span class="tech-badge purple" style="font-size: 0.65rem;">gRPC</span>
+                            </div>
+                            <div style="position: absolute; top: 50%; left: 0; transform: translateY(-50%);" class="port-badge">
+                                <span class="tech-badge orange" style="font-size: 0.65rem;">GraphQL</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.8rem; margin-top: 1rem; color: var(--text-muted);">
+                            Le cœur métier est indépendant des protocoles
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 26: Orchestration Service -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3>🎻 Orchestration Service</h3>
+                    <h2>Le Chef d'Orchestre IA</h2>
+                    
+                    <p>Le service d'orchestration coordonne les appels entre services grâce à l'intelligence artificielle Gemini.</p>
+                    
+                    <div class="card" style="margin-top: 1.5rem; border-left: 4px solid var(--secondary);">
+                        <h4>Responsabilités</h4>
+                        <ul style="font-size: 0.85rem; margin-top: 0.5rem;">
+                            <li>Analyse des intentions utilisateur (NLP)</li>
+                            <li>Routage intelligent vers les services</li>
+                            <li>Agrégation des réponses multi-protocoles</li>
+                            <li>Synthèse intelligente des résultats</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="code-block" style="margin-top: 1rem;" data-lang="Java">
+<span class="code-keyword">@Service</span>
+<span class="code-keyword">public class</span> <span class="code-function">OrchestrationService</span> {
+    
+    <span class="code-keyword">@Autowired</span>
+    <span class="code-keyword">private</span> GeminiClient gemini;
+    
+    <span class="code-keyword">public</span> Response <span class="code-function">processQuery</span>(String query) {
+        Intent intent = gemini.analyze(query);
+        List&lt;ServiceCall&gt; calls = route(intent);
+        <span class="code-keyword">return</span> aggregate(execute(calls));
+    }
+}
+                    </div>
+                </div>
+                <div>
+                    <!-- Orchestration Flow Diagram -->
+                    <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 16px;">
+                        <div style="text-align: center;">
+                            <div style="display: inline-block; padding: 1rem 2rem; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 10px; margin-bottom: 1rem;">
+                                <span style="font-size: 1.5rem;">💬</span>
+                                <p style="margin: 0; font-size: 0.8rem;">"Comment aller au concert ?"</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flow-arrow" style="margin: 0.5rem auto;"></div>
+                        
+                        <div style="text-align: center; padding: 1rem; background: rgba(124, 58, 237, 0.2); border-radius: 10px; margin: 0.5rem 0;">
+                            <span style="font-size: 1.2rem;">🧠</span>
+                            <p style="margin: 0; font-size: 0.75rem;">Gemini AI Analysis</p>
+                        </div>
+                        
+                        <div class="flow-arrow" style="margin: 0.5rem auto;"></div>
+                        
+                        <div style="display: flex; gap: 0.5rem; justify-content: center; margin: 0.5rem 0;">
+                            <div style="padding: 0.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 8px; font-size: 0.7rem;">
+                                🎭 Events<br><small>GraphQL</small>
+                            </div>
+                            <div style="padding: 0.5rem; background: rgba(59, 130, 246, 0.2); border-radius: 8px; font-size: 0.7rem;">
+                                🚌 Mobility<br><small>REST</small>
+                            </div>
+                        </div>
+                        
+                        <div class="flow-arrow" style="margin: 0.5rem auto;"></div>
+                        
+                        <div style="text-align: center; padding: 1rem; background: rgba(0, 255, 136, 0.2); border-radius: 10px;">
+                            <span style="font-size: 1rem;">✨</span>
+                            <p style="margin: 0; font-size: 0.7rem;">
+                                "Concert Jazz à 20h. Bus 42 à 19h30 depuis votre position."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 27: Monitoring & Health -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>❤️ Monitoring & Santé des Services</h2>
+                <p>Observabilité complète grâce à Spring Boot Actuator</p>
+                
+                <div class="grid-3" style="margin-top: 2rem;">
+                    <div class="card">
+                        <div style="text-align: center;">
+                            <div style="width: 80px; height: 80px; margin: 0 auto 1rem; background: rgba(0, 255, 136, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent);">
+                                <span style="font-size: 2rem;">💚</span>
+                            </div>
+                            <h3>Health Checks</h3>
+                        </div>
+                        <div class="code-block" style="font-size: 0.65rem; margin-top: 1rem;">
+GET /actuator/health
+
+{
+  "status": "UP",
+  "components": {
+    "db": { "status": "UP" },
+    "diskSpace": { "status": "UP" },
+    "ping": { "status": "UP" }
+  }
+}
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div style="text-align: center;">
+                            <div style="width: 80px; height: 80px; margin: 0 auto 1rem; background: rgba(0, 212, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--primary);">
+                                <span style="font-size: 2rem;">📊</span>
+                            </div>
+                            <h3>Metrics</h3>
+                        </div>
+                        <div class="code-block" style="font-size: 0.65rem; margin-top: 1rem;">
+GET /actuator/metrics
+
+- jvm.memory.used
+- http.server.requests
+- system.cpu.usage
+- process.uptime
+
+→ Prometheus ready!
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div style="text-align: center;">
+                            <div style="width: 80px; height: 80px; margin: 0 auto 1rem; background: rgba(124, 58, 237, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--secondary);">
+                                <span style="font-size: 2rem;">🔍</span>
+                            </div>
+                            <h3>Tracing</h3>
+                        </div>
+                        <div class="code-block" style="font-size: 0.65rem; margin-top: 1rem;">
+Trace ID: abc123
+
+[Gateway] 2ms
+  └─[Orchestrator] 15ms
+      ├─[Events] 8ms
+      └─[Mobility] 12ms
+
+→ Distributed tracing
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Service Status Dashboard -->
+                <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--glass); border-radius: 50px;">
+                        <div style="width: 10px; height: 10px; background: var(--accent); border-radius: 50%; animation: pulse 1s infinite;"></div>
+                        <span style="font-size: 0.8rem;">Gateway: UP</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--glass); border-radius: 50px;">
+                        <div style="width: 10px; height: 10px; background: var(--accent); border-radius: 50%; animation: pulse 1s infinite 0.2s;"></div>
+                        <span style="font-size: 0.8rem;">Mobility: UP</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--glass); border-radius: 50px;">
+                        <div style="width: 10px; height: 10px; background: var(--accent); border-radius: 50%; animation: pulse 1s infinite 0.4s;"></div>
+                        <span style="font-size: 0.8rem;">Air Quality: UP</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--glass); border-radius: 50px;">
+                        <div style="width: 10px; height: 10px; background: var(--accent); border-radius: 50%; animation: pulse 1s infinite 0.6s;"></div>
+                        <span style="font-size: 0.8rem;">Emergency: UP</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--glass); border-radius: 50px;">
+                        <div style="width: 10px; height: 10px; background: var(--accent); border-radius: 50%; animation: pulse 1s infinite 0.8s;"></div>
+                        <span style="font-size: 0.8rem;">Events: UP</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 28: CI/CD Pipeline -->
+        <div class="slide">
+            <div class="slide-content">
+                <div>
+                    <h3>🚀 CI/CD Pipeline</h3>
+                    <h2>Du Code à la Production</h2>
+                    
+                    <p>Automatisation complète du déploiement avec Docker</p>
+                    
+                    <!-- Pipeline Steps -->
+                    <div style="margin-top: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.8rem;">
+                            <div style="width: 35px; height: 35px; background: #6366f1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">📝</div>
+                            <div style="flex: 1;">
+                                <strong style="font-size: 0.9rem;">Git Push</strong>
+                                <div class="perf-bar"><div class="perf-fill" style="width: 100%; background: #6366f1;"></div></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.8rem;">
+                            <div style="width: 35px; height: 35px; background: #8b5cf6; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">🧪</div>
+                            <div style="flex: 1;">
+                                <strong style="font-size: 0.9rem;">Tests (JUnit)</strong>
+                                <div class="perf-bar"><div class="perf-fill" style="width: 85%; background: #8b5cf6;"></div></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.8rem;">
+                            <div style="width: 35px; height: 35px; background: #a855f7; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">🔨</div>
+                            <div style="flex: 1;">
+                                <strong style="font-size: 0.9rem;">Build Maven</strong>
+                                <div class="perf-bar"><div class="perf-fill" style="width: 70%; background: #a855f7;"></div></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.8rem;">
+                            <div style="width: 35px; height: 35px; background: #c084fc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">🐳</div>
+                            <div style="flex: 1;">
+                                <strong style="font-size: 0.9rem;">Docker Build</strong>
+                                <div class="perf-bar"><div class="perf-fill" style="width: 55%; background: #c084fc;"></div></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 35px; height: 35px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">🚀</div>
+                            <div style="flex: 1;">
+                                <strong style="font-size: 0.9rem;">Deploy</strong>
+                                <div class="perf-bar"><div class="perf-fill" style="width: 40%; background: var(--accent);"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="code-block" data-lang="Bash" style="height: 100%;">
+<span class="code-comment"># 🚀 Déploiement en une commande</span>
+
+<span class="code-comment"># 1. Build all services</span>
+$ mvn clean package -DskipTests
+
+<span class="code-comment"># 2. Build Docker images</span>
+$ docker-compose build
+
+<span class="code-comment"># 3. Start everything</span>
+$ docker-compose up -d
+
+<span class="code-comment"># 4. Check logs</span>
+$ docker-compose logs -f
+
+<span class="code-comment"># ✅ Smart Village is LIVE!</span>
+<span class="code-keyword">Services running:</span>
+  ✓ api-gateway       → :8080
+  ✓ mobility-service  → :8081
+  ✓ air-quality       → :8082
+  ✓ emergency         → :8083
+  ✓ urban-events      → :8084
+  ✓ orchestration     → :8085
+  ✓ frontend          → :3000
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 29: Tech Stack Complete -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>🛠️ Stack Technique Complète</h2>
+                
+                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-top: 2rem;">
+                    <div class="card tech-card" style="width: 140px; text-align: center; transition: all 0.3s;">
+                        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">☕</div>
+                        <h4 style="font-size: 1rem;">Java 17</h4>
+                        <small>LTS Release</small>
+                    </div>
+                    <div class="card tech-card" style="width: 140px; text-align: center;">
+                        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🍃</div>
+                        <h4 style="font-size: 1rem;">Spring Boot 3</h4>
+                        <small>Framework</small>
+                    </div>
+                    <div class="card tech-card" style="width: 140px; text-align: center;">
+                        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🐳</div>
+                        <h4 style="font-size: 1rem;">Docker</h4>
+                        <small>Containers</small>
+                    </div>
+                    <div class="card tech-card" style="width: 140px; text-align: center;">
+                        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⚛️</div>
+                        <h4 style="font-size: 1rem;">React</h4>
+                        <small>Frontend</small>
+                    </div>
+                    <div class="card tech-card" style="width: 140px; text-align: center;">
+                        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🧠</div>
+                        <h4 style="font-size: 1rem;">Gemini AI</h4>
+                        <small>Intelligence</small>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem; text-align: center;">
+                    <h4 style="margin-bottom: 1rem; color: var(--text-muted);">Protocoles & Frameworks</h4>
+                    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;">
+                        <span class="tech-badge" style="animation: fadeIn 0.5s ease-out;">JAX-WS (SOAP)</span>
+                        <span class="tech-badge green" style="animation: fadeIn 0.5s ease-out 0.1s;">gRPC-Java</span>
+                        <span class="tech-badge purple" style="animation: fadeIn 0.5s ease-out 0.2s;">Spring GraphQL</span>
+                        <span class="tech-badge orange" style="animation: fadeIn 0.5s ease-out 0.3s;">Spring MVC (REST)</span>
+                        <span class="tech-badge" style="animation: fadeIn 0.5s ease-out 0.4s;">Spring Cloud Gateway</span>
+                        <span class="tech-badge green" style="animation: fadeIn 0.5s ease-out 0.5s;">Maven</span>
+                        <span class="tech-badge purple" style="animation: fadeIn 0.5s ease-out 0.6s;">Vite</span>
+                        <span class="tech-badge orange" style="animation: fadeIn 0.5s ease-out 0.7s;">Tailwind CSS</span>
+                    </div>
+                </div>
+                
+                <style>
+                    @keyframes fadeIn {
+                        from { opacity: 0; transform: translateY(10px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    .tech-card:hover {
+                        transform: translateY(-10px) scale(1.05);
+                        box-shadow: var(--glow-primary);
+                    }
+                </style>
+            </div>
+        </div>
+
+        <!-- Slide 30: Résumé Visuel -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>🎯 Smart Village en Un Coup d'Œil</h2>
+                
+                <div style="position: relative; margin-top: 2rem; padding: 2rem; background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(124,58,237,0.1)); border-radius: 20px;">
+                    <!-- Central Hub -->
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 2rem; flex-wrap: wrap;">
+                        
+                        <!-- Frontend -->
+                        <div style="text-align: center;">
+                            <div style="width: 80px; height: 80px; background: var(--glass); border: 2px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                                <span style="font-size: 2rem;">⚛️</span>
+                            </div>
+                            <p style="font-size: 0.8rem; margin-top: 0.5rem;">React</p>
+                        </div>
+                        
+                        <div style="font-size: 1.5rem; color: var(--primary);">⟶</div>
+                        
+                        <!-- Gateway -->
+                        <div style="text-align: center;">
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--warning), #d97706); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 0 30px rgba(255,107,53,0.3);">
+                                <span style="font-size: 2rem;">🚪</span>
+                            </div>
+                            <p style="font-size: 0.8rem; margin-top: 0.5rem;">Gateway</p>
+                        </div>
+                        
+                        <div style="font-size: 1.5rem; color: var(--primary);">⟶</div>
+                        
+                        <!-- Services -->
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
+                            <div style="padding: 0.5rem; background: rgba(239,68,68,0.2); border-radius: 10px; text-align: center;">
+                                <span>🚌</span><br><small>REST</small>
+                            </div>
+                            <div style="padding: 0.5rem; background: rgba(34,197,94,0.2); border-radius: 10px; text-align: center;">
+                                <span>🌫️</span><br><small>SOAP</small>
+                            </div>
+                            <div style="padding: 0.5rem; background: rgba(59,130,246,0.2); border-radius: 10px; text-align: center;">
+                                <span>🚨</span><br><small>gRPC</small>
+                            </div>
+                            <div style="padding: 0.5rem; background: rgba(232,121,249,0.2); border-radius: 10px; text-align: center;">
+                                <span>🎭</span><br><small>GraphQL</small>
+                            </div>
+                        </div>
+                        
+                        <div style="font-size: 1.5rem; color: var(--primary);">⟷</div>
+                        
+                        <!-- AI -->
+                        <div style="text-align: center;">
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--secondary), var(--primary)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; animation: pulse 2s infinite; box-shadow: 0 0 40px rgba(124,58,237,0.4);">
+                                <span style="font-size: 2rem;">🧠</span>
+                            </div>
+                            <p style="font-size: 0.8rem; margin-top: 0.5rem;">Gemini AI</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Docker Container -->
+                    <div style="position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); background: #0db7ed; padding: 0.3rem 1rem; border-radius: 20px; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🐳</span>
+                        <span style="font-size: 0.75rem; color: white;">Docker Compose</span>
+                    </div>
+                </div>
+                
+                <div class="grid-3" style="margin-top: 3rem;">
+                    <div style="text-align: center;">
+                        <span style="font-size: 2.5rem; display: block;">5</span>
+                        <small style="color: var(--text-muted);">Microservices</small>
+                    </div>
+                    <div style="text-align: center;">
+                        <span style="font-size: 2.5rem; display: block;">4</span>
+                        <small style="color: var(--text-muted);">Protocoles</small>
+                    </div>
+                    <div style="text-align: center;">
+                        <span style="font-size: 2.5rem; display: block;">1</span>
+                        <small style="color: var(--text-muted);">IA Unifiante</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 31: Future Roadmap -->
+        <div class="slide">
+            <div class="slide-content full-width">
+                <h2>🔮 Évolutions Futures</h2>
+                
+                <div style="display: flex; justify-content: center; margin-top: 2rem;">
+                    <div style="position: relative; width: 100%; max-width: 800px;">
+                        <!-- Timeline line -->
+                        <div style="position: absolute; top: 25px; left: 10%; right: 10%; height: 3px; background: linear-gradient(90deg, var(--primary), var(--accent), var(--secondary));"></div>
+                        
+                        <div style="display: flex; justify-content: space-between;">
+                            <!-- Phase 1 -->
+                            <div style="text-align: center; width: 25%;">
+                                <div style="width: 50px; height: 50px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; position: relative; z-index: 1;">
+                                    <span>✅</span>
+                                </div>
+                                <h4 style="margin-top: 1rem; font-size: 0.9rem;">Phase 1</h4>
+                                <p style="font-size: 0.7rem; color: var(--text-muted);">MVP<br>4 Protocoles<br>Docker</p>
+                            </div>
+                            
+                            <!-- Phase 2 -->
+                            <div style="text-align: center; width: 25%;">
+                                <div style="width: 50px; height: 50px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; position: relative; z-index: 1;">
+                                    <span>🔄</span>
+                                </div>
+                                <h4 style="margin-top: 1rem; font-size: 0.9rem;">Phase 2</h4>
+                                <p style="font-size: 0.7rem; color: var(--text-muted);">Kubernetes<br>Auto-scaling<br>Monitoring</p>
+                            </div>
+                            
+                            <!-- Phase 3 -->
+                            <div style="text-align: center; width: 25%;">
+                                <div style="width: 50px; height: 50px; background: var(--secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; position: relative; z-index: 1;">
+                                    <span>🎯</span>
+                                </div>
+                                <h4 style="margin-top: 1rem; font-size: 0.9rem;">Phase 3</h4>
+                                <p style="font-size: 0.7rem; color: var(--text-muted);">IoT Sensors<br>Real-time<br>ML Models</p>
+                            </div>
+                            
+                            <!-- Phase 4 -->
+                            <div style="text-align: center; width: 25%;">
+                                <div style="width: 50px; height: 50px; background: var(--glass); border: 2px dashed var(--warning); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; position: relative; z-index: 1;">
+                                    <span>🚀</span>
+                                </div>
+                                <h4 style="margin-top: 1rem; font-size: 0.9rem;">Phase 4</h4>
+                                <p style="font-size: 0.7rem; color: var(--text-muted);">Multi-City<br>Federation<br>Open Data</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid-2" style="margin-top: 3rem; max-width: 800px; margin-left: auto; margin-right: auto;">
+                    <div class="card" style="text-align: center;">
+                        <span style="font-size: 2rem;">📱</span>
+                        <h4>Mobile App</h4>
+                        <p style="font-size: 0.8rem;">React Native pour iOS/Android</p>
+                    </div>
+                    <div class="card" style="text-align: center;">
+                        <span style="font-size: 2rem;">🌐</span>
+                        <h4>WebSocket</h4>
+                        <p style="font-size: 0.8rem;">Notifications temps réel</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 32: Conclusion -->
+        <div class="slide">
+            <div class="slide-content full-width" style="text-align: center;">
+                <div style="margin-bottom: 2rem;">
+                    <span style="font-size: 4rem; display: block; animation: float 3s ease-in-out infinite;">🏘️</span>
+                </div>
+                
+                <h1 style="font-size: 3.5rem; margin-bottom: 1rem;">Le Futur est Hybride</h1>
+                
+                <p style="font-size: 1.2rem; max-width: 700px; margin: 0 auto 2rem; line-height: 1.8;">
+                    Notre architecture prouve qu'il est possible de concilier la 
+                    <span style="color: var(--primary);">robustesse des protocoles historiques</span> avec la 
+                    <span style="color: var(--accent);">flexibilité des technologies modernes</span> et la 
+                    <span style="color: var(--secondary);">puissance de l'IA</span>.
+                </p>
+                
+                <div style="display: flex; justify-content: center; gap: 1rem; margin: 2rem 0; flex-wrap: wrap;">
+                    <div class="card" style="background: rgba(0, 212, 255, 0.1); border-color: var(--primary); padding: 1rem 2rem;">
+                        <span style="font-size: 1.5rem;">🔗</span>
+                        <h4>Interopérable</h4>
+                    </div>
+                    <div class="card" style="background: rgba(0, 255, 136, 0.1); border-color: var(--accent); padding: 1rem 2rem;">
+                        <span style="font-size: 1.5rem;">🧠</span>
+                        <h4>Intelligent</h4>
+                    </div>
+                    <div class="card" style="background: rgba(124, 58, 237, 0.1); border-color: var(--secondary); padding: 1rem 2rem;">
+                        <span style="font-size: 1.5rem;">📈</span>
+                        <h4>Scalable</h4>
+                    </div>
+                </div>
+                
+                <style>
+                    @keyframes float {
+                        0%, 100% { transform: translateY(0); }
+                        50% { transform: translateY(-15px); }
+                    }
+                </style>
+            </div>
+        </div>
+
+        <!-- Slide 33: Thank You -->
+        <div class="slide">
+            <div class="slide-content full-width" style="text-align: center;">
+                <div style="position: relative;">
+                    <!-- Animated background circles -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 300px; height: 300px; border-radius: 50%; border: 2px solid var(--primary); opacity: 0.2; animation: expandRing 3s ease-out infinite;"></div>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 300px; height: 300px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0.2; animation: expandRing 3s ease-out infinite 1s;"></div>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 300px; height: 300px; border-radius: 50%; border: 2px solid var(--secondary); opacity: 0.2; animation: expandRing 3s ease-out infinite 2s;"></div>
+                    
+                    <div style="position: relative; z-index: 10;">
+                        <p style="font-family: 'JetBrains Mono', monospace; color: var(--text-muted); margin-bottom: 1rem; font-size: 1rem;">
+                            Merci de votre attention
+                        </p>
+                        
+                        <h1 style="font-size: 3rem; margin-bottom: 0.5rem;">
+                            Rana ROMDHANE
+                        </h1>
+                        
+                        <p style="color: var(--primary); font-size: 1.1rem;">
+                            Projet de Service Oriented Computing
+                        </p>
+                        
+                        <div style="margin-top: 3rem; display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap;">
+                            <span class="tech-badge" style="font-size: 1rem; padding: 0.8rem 1.5rem;">💼 GitHub</span>
+                            <span class="tech-badge green" style="font-size: 1rem; padding: 0.8rem 1.5rem;">💼 LinkedIn</span>
+                            <span class="tech-badge purple" style="font-size: 1rem; padding: 0.8rem 1.5rem;">📧 Contact</span>
+                        </div>
+                        
+                        <div style="margin-top: 3rem;">
+                            <p style="font-size: 2rem; margin: 0;">❓</p>
+                            <h3 style="color: var(--accent); margin-top: 0.5rem;">Questions ?</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <style>
+                    @keyframes expandRing {
+                        0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.4; }
+                        100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+                    }
+                </style>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation Controls -->
+    <div style="position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; gap: 0.5rem; z-index: 1000;">
+        <button class="nav-btn" onclick="prevSlide()" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+            <span style="margin-right: 0.3rem;">❮</span>
+        </button>
+        <button class="nav-btn" onclick="nextSlide()" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+            <span style="margin-left: 0.3rem;">❯</span>
+        </button>
+    </div>
+
+    <script>
+        let currentSlideIndex = 0;
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progressBar');
+        const currentSlideEl = document.getElementById('currentSlide');
+        const totalSlidesEl = document.getElementById('totalSlides');
+
+        // Generate particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                
+                // Random colors
+                const colors = ['var(--primary)', 'var(--accent)', 'var(--secondary)'];
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                container.appendChild(particle);
+            }
+        }
+
+        function updateSlides() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'prev', 'next');
+                if (index === currentSlideIndex) {
+                    slide.classList.add('active');
+                } else if (index < currentSlideIndex) {
+                    slide.classList.add('prev');
+                } else {
+                    slide.classList.add('next');
+                }
+            });
+
+            // Update progress
+            const progress = ((currentSlideIndex + 1) / slides.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            currentSlideEl.textContent = currentSlideIndex + 1;
+            totalSlidesEl.textContent = slides.length;
+            
+            // Save current slide to localStorage
+            localStorage.setItem('smartVillageSlide', currentSlideIndex);
+        }
+
+        function nextSlide() {
+            if (currentSlideIndex < slides.length - 1) {
+                currentSlideIndex++;
+                updateSlides();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlideIndex > 0) {
+                currentSlideIndex--;
+                updateSlides();
+            }
+        }
+
+        function goToSlide(index) {
+            if (index >= 0 && index < slides.length) {
+                currentSlideIndex = index;
+                updateSlides();
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            }
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+            if (e.key === 'Home') {
+                e.preventDefault();
+                goToSlide(0);
+            }
+            if (e.key === 'End') {
+                e.preventDefault();
+                goToSlide(slides.length - 1);
+            }
+            // Number keys to jump to slides
+            if (e.key >= '1' && e.key <= '9') {
+                goToSlide(parseInt(e.key) - 1);
+            }
+        });
+
+        // Touch/swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            
+            // Restore last viewed slide
+            const savedSlide = localStorage.getItem('smartVillageSlide');
+            if (savedSlide) {
+                currentSlideIndex = parseInt(savedSlide);
+            }
+            
+            totalSlidesEl.textContent = slides.length;
+            updateSlides();
+        });
+
+        // Animate performance bars when slide is active
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const bars = entry.target.querySelectorAll('.perf-fill');
+                    bars.forEach(bar => {
+                        const width = bar.style.width;
+                        bar.style.width = '0';
+                        setTimeout(() => {
+                            bar.style.width = width;
+                        }, 300);
+                    });
+                }
+            });
+        });
+
+        slides.forEach(slide => observer.observe(slide));
+
+        // Typewriter effect for title
+        function typeWriter(text, elementId, speed = 150) {
+            let i = 0;
+            const element = document.getElementById(elementId);
+            const cursor = document.getElementById('cursor');
+            
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                } else {
+                    // Hide cursor after typing is done
+                    setTimeout(() => {
+                        cursor.style.display = 'none';
+                    }, 1000);
+                }
+            }
+            
+            type();
+        }
+
+        // Start typewriter when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                typeWriter('SMART VILLAGE', 'typewriterText', 120);
+            }, 500);
+        });
+    </script>
+</body>
+</html>
